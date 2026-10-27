@@ -1,0 +1,209 @@
+/* Estilos específicos del Coach Portal */
+.login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 80% -10%, rgba(111,168,255,.05), transparent 60%), var(--bg-deep);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.login-card .brand-logo {
+  font-family: var(--font-display);
+  font-size: 28px;
+  letter-spacing: .3em;
+  color: var(--silver-light);
+  margin-bottom: 8px;
+}
+
+.login-card .brand-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .2em;
+  margin-bottom: 32px;
+  text-transform: uppercase;
+}
+
+.login-error {
+  background: rgba(226,92,92,0.1);
+  border: 1px solid rgba(226,92,92,0.3);
+  color: var(--danger);
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  margin-bottom: 16px;
+  display: none;
+}
+
+.coach-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.coach-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background: linear-gradient(180deg, #0A0A0C 0%, #050505 100%);
+  border-bottom: 1px solid var(--border-soft);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.coach-nav {
+  display: flex;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-soft);
+  overflow-x: auto;
+  position: sticky;
+  top: 64px;
+  z-index: 90;
+}
+
+.stats-tabs {
+  position: sticky;
+  top: 117px;
+  z-index: 80;
+  background: var(--bg-panel);
+}
+
+.coach-nav-item {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: .15s;
+  white-space: nowrap;
+}
+
+.coach-nav-item:hover {
+  color: var(--silver-light);
+  background: var(--bg-elev);
+}
+
+.coach-nav-item.active {
+  color: var(--accent);
+  background: rgba(111,168,255,.1);
+}
+
+.coach-content {
+  flex: 1;
+  padding: 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  /* 🔥 FIX SCROLL: Forzamos una altura mínima para que siempre haya scroll */
+  min-height: calc(100vh - 150px); 
+}
+
+/* 🔥 FIX TRUNCATE: Corta los nombres largos con puntos suspensivos */
+.ztable .player-name-cell {
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.market-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.market-table .col-name { width: 30%; }
+.market-table .col-rank { width: 20%; }
+.market-table .col-team { width: 20%; }
+.market-table .col-value { width: 15%; text-align: right; }
+.market-table .col-action { width: 15%; text-align: right; }
+
+.standings-table {
+  width: 100%;
+}
+
+.zone-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 10.5px;
+  letter-spacing: .08em;
+}
+.zone-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.zone-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+@media (max-width: 768px) {
+  .coach-header { padding: 0 12px; height: 56px; }
+  .coach-content { padding: 12px; min-height: calc(100vh - 120px); }
+  .coach-nav { padding: 10px 12px; gap: 8px; top: 56px; }
+  .coach-nav-item { padding: 6px 10px; font-size: 11px; }
+  .stats-tabs { top: 102px; padding: 6px; margin-bottom: 14px; }
+  .stats-tab { padding: 6px 10px; font-size: 11px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: hidden;
+  }
+  
+  .ztable {
+    font-size: 11px;
+  }
+  
+  .ztable th, .ztable td {
+    padding: 8px 4px !important;
+  }
+
+  .ztable .logo-sm {
+    width: 18px;
+    height: 18px;
+  }
+
+  .card { padding: 12px; }
+  #headerCoachName { display: none; }
+
+  .modal { max-width: 95vw; max-height: 90vh; }
+  .modal-body { padding: 16px; }
+  .modal-foot { padding: 12px; flex-wrap: wrap; }
+  .modal-foot .btn { flex: 1; }
+
+  .input, .select, .textarea { font-size: 16px; padding: 12px; }
+  .team-logo-box-xl { width: 60px !important; height: 60px !important; }
+  h2 { font-size: 20px !important; }
+
+  .ztable .player-name-cell {
+    max-width: 80px; /* Más corto en móvil */
+  }
+}

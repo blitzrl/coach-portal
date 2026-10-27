@@ -1,0 +1,927 @@
+/* ============================================================
+   ZENITH VIEWER — Public Layout
+   Header horizontal + sidebar móvil + fixes responsivos
+   v2.7.1 — Restaurado bloque v2.6.6 (badges live/final)
+   ============================================================ */
+
+/* ──── Prevenir scroll horizontal global (fix dropdowns) ──── */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ──── Reset del layout del gestor ──── */
+.public-mode.app-shell {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  min-height: 100vh;
+  background: radial-gradient(1200px 600px at 80% -10%, rgba(111,168,255,.05), transparent 60%), var(--bg-deep);
+  overflow-x: hidden;
+}
+
+.public-mode .sidebar { display: none; }
+
+/* ──── TOPBAR ──── */
+.public-topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 64px;
+  padding: 0 20px;
+  background: linear-gradient(180deg, #0A0A0C 0%, #050505 100%);
+  border-bottom: 1px solid rgba(111,168,255,0.10);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+  box-shadow: 0 1px 0 rgba(111,168,255,0.05);
+}
+
+.public-topbar::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(111,168,255,0.35), transparent 70%);
+  pointer-events: none;
+}
+
+.public-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--silver-light);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+/* ──── Brand ──── */
+.topbar-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.topbar-logo { width: 38px; height: 38px; object-fit: contain; }
+.topbar-name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  letter-spacing: 0.32em;
+  font-weight: 600;
+  color: var(--silver-light);
+}
+.topbar-sep {
+  width: 1px;
+  height: 24px;
+  background: linear-gradient(180deg, transparent, rgba(111,168,255,0.25), transparent);
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+/* ──── Nav ──── */
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  height: 100%;
+}
+.topbar-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 12px;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+.topbar-nav-item:hover { color: var(--silver-light); }
+.topbar-nav-item.active { color: var(--silver-light); }
+.topbar-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent);
+  box-shadow:
+    0 0 8px var(--accent),
+    0 0 16px rgba(111,168,255,0.55);
+  border-radius: 1px 1px 0 0;
+}
+
+/* ──── Right (selectores) ──── */
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.public-topbar .season-selector,
+.public-topbar .division-selector { position: relative; }
+
+.public-topbar .chip-season-btn,
+.public-topbar .chip-division-btn {
+  height: 34px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+/* ──── DROPDOWNS (fix scroll horizontal) ──── */
+.season-dropdown,
+.division-dropdown {
+  max-width: calc(100vw - 20px);
+  box-sizing: border-box;
+}
+
+/* Desktop: temporada izquierda, división derecha (está más cerca del borde) */
+@media (min-width: 901px) {
+  .division-dropdown {
+    left: auto;
+    right: 0;
+  }
+}
+
+/* Móvil: ambos alineados a la derecha */
+@media (max-width: 900px) {
+  .season-dropdown,
+  .division-dropdown {
+    left: auto;
+    right: 0;
+    max-width: calc(100vw - 20px);
+  }
+}
+
+/* ──── SIDEBAR MÓVIL ──── */
+.public-sidebar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background: linear-gradient(180deg, #08080A, #050505);
+  border-right: 1px solid var(--border-soft);
+  z-index: 200;
+  transition: left 0.25s ease;
+  flex-direction: column;
+  padding: 20px 14px;
+}
+.public-sidebar.open { left: 0; }
+.public-sidebar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-soft);
+  margin-bottom: 16px;
+}
+.public-sidebar-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.public-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+.public-sidebar-nav a {
+  display: flex;
+  align-items: center;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--silver);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  transition: 0.15s;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+}
+.public-sidebar-nav a:hover { background: var(--bg-panel); color: var(--silver-light); }
+.public-sidebar-nav a.active {
+  background: linear-gradient(90deg, rgba(111,168,255,.10), transparent);
+  color: var(--silver-light);
+  border-left-color: var(--accent);
+}
+
+.public-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 150;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.public-sidebar-overlay.open { display: block; opacity: 1; }
+
+/* ──── Contenido principal ──── */
+.public-view {
+  flex: 1;
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 26px 28px 60px;
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET
+   ============================================================ */
+@media (max-width: 1100px) {
+  .topbar-nav-item {
+    padding: 0 9px;
+    font-size: 10.5px;
+    letter-spacing: 0.10em;
+  }
+}
+
+@media (max-width: 900px) {
+  .public-menu-toggle { display: block; }
+  .topbar-nav { display: none; }
+  .public-sidebar { display: flex; }
+  .topbar-name { display: none; }
+
+  .public-topbar {
+    padding: 0 12px;
+    gap: 8px;
+    height: 58px;
+  }
+
+  .topbar-logo { width: 32px; height: 32px; }
+
+  .public-view { padding: 16px 14px 60px; }
+
+  .public-topbar .chip-season-btn,
+  .public-topbar .chip-division-btn {
+    height: 30px;
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
+  /* Grid dashboards → 1 columna */
+  .grid-dash { grid-template-columns: 1fr !important; }
+  .grid-dash > * { grid-column: span 1 !important; grid-row: span 1 !important; }
+
+  /* Grid 3 col → 1 */
+  .grid-3, .grid-2 { grid-template-columns: 1fr !important; }
+
+  /* ──── Carrusel: flechas más pequeñas en tablet ──── */
+  .wc-nav {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — MÓVIL
+   ============================================================ */
+@media (max-width: 600px) {
+
+  .public-view { padding: 12px 10px 60px; }
+
+  .public-topbar { padding: 0 10px; height: 54px; }
+
+  .topbar-right .chip-division-btn span:first-child {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     1. TABLA GENERAL (widget) — FIX ALTURA MÓVIL v2.6.5
+     Móvil: 5-7 equipos visibles + scroll interno.
+     MOSTRAR las 3 columnas de datos: PTS, SG, DP.
+     ═══════════════════════════════════════════════════════════ */
+
+  /* El slot debe poder crecer y NO colapsar por el grid-row: span 1 */
+  .widget-slot[data-widget="standings"] {
+    min-height: 380px !important;
+    max-height: 440px !important;
+    grid-row: auto !important;
+    overflow: visible !important;
+  }
+
+  /* El card interno ocupa toda la altura disponible */
+  .widget-slot[data-widget="standings"] > .card {
+    height: 100%;
+    min-height: 0;
+  }
+
+  /* Header de la card no se comprime */
+  .widget-slot[data-widget="standings"] .card-header {
+    flex-shrink: 0;
+  }
+
+  /* El scroll interno: aquí vive la lista de equipos */
+  .widget-slot[data-widget="standings"] .widget-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    padding-right: 4px;
+  }
+  .widget-slot[data-widget="standings"] .widget-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .widget-slot[data-widget="standings"] .widget-scroll::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+  .widget-slot[data-widget="standings"] .widget-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
+  /* Compactar padding de la tabla para que quepan más filas */
+  .widget-slot[data-widget="standings"] .ztable thead th,
+  .widget-slot[data-widget="standings"] .ztable tbody td {
+    padding: 9px 6px;
+  }
+
+  /* Reducir ligeramente la fuente para que quepan las 3 columnas */
+  .widget-slot[data-widget="standings"] .ztable { font-size: 12px; }
+  .widget-slot[data-widget="standings"] .team-cell-name {
+    max-width: 110px;
+  }
+
+  /* Números un poco más compactos */
+  .widget-slot[data-widget="standings"] .ztable .num {
+    font-size: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  /* Zonas en móvil — más compacto */
+  .zone-legend {
+    gap: 8px;
+    font-size: 9.5px;
+  }
+  .zone-legend-dot { width: 8px; height: 8px; }
+
+  /* ──── 2 y 6. NOTICIAS (grid) ──── */
+  .news-grid { grid-template-columns: 1fr !important; }
+  .news-list-grid { grid-template-columns: 1fr !important; }
+  .news-list-banner { height: 140px; }
+  .news-card-banner { height: 130px; }
+
+  /* ──── 3. MODAL de noticia ──── */
+  .modal { max-width: 96vw; max-height: 92vh; }
+  .modal-head { padding: 14px 16px; }
+  .modal-head h3 { font-size: 12px; letter-spacing: .14em; }
+  .modal-body { padding: 16px 14px; }
+  .modal-foot { padding: 12px 14px; }
+
+  .news-modal-banner { max-height: 200px; margin-bottom: 14px; }
+  .news-modal-title {
+    font-size: 20px;
+    letter-spacing: .04em;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .news-modal-meta {
+    gap: 8px;
+    font-size: 11px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .news-modal-body { font-size: 13.5px; line-height: 1.65; }
+
+  /* Bloques de noticia en móvil */
+  .news-block-title { font-size: 17px; margin: 16px 0 8px; }
+  .news-block-text { font-size: 13.5px; }
+  .news-block-team {
+    padding: 10px;
+    gap: 10px;
+  }
+  .news-block-team img { width: 44px; height: 44px; }
+  .news-block-team-name { font-size: 14px; }
+  .news-block-player { padding: 10px; gap: 10px; }
+  .news-block-player-avatar { width: 44px; height: 44px; }
+
+  /* ──── 4. JUGADORES — tabla responsiva ──── */
+  .players-table-wrap { overflow-x: auto; }
+  .players-table { font-size: 12px; }
+  .players-table thead th,
+  .players-table tbody td { padding: 8px 6px; }
+
+  /* En móvil, ocultar PLATAFORMA, PJ y G — dejar solo #, jugador, rango, PIG, trofeos */
+  .players-table .col-platform,
+  .players-table .col-games,
+  .players-table .col-goals {
+    display: none;
+  }
+  .players-table .col-rank .chip {
+    font-size: 10px;
+    padding: 3px 8px;
+    letter-spacing: 0.06em;
+  }
+
+  /* ──── 5. STATS TABS — scroll horizontal ──── */
+  .stats-tabs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 6px;
+    margin-bottom: 14px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    padding: 6px;
+  }
+  .stats-tabs::-webkit-scrollbar { height: 4px; }
+  .stats-tabs::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+  }
+  .stats-tab {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: 11.5px;
+  }
+
+  /* Tabla de stats en móvil — reducir columnas */
+  #statsContent .ztable thead th:nth-child(6),
+  #statsContent .ztable thead th:nth-child(7),
+  #statsContent .ztable thead th:nth-child(9),
+  #statsContent .ztable tbody td:nth-child(6),
+  #statsContent .ztable tbody td:nth-child(7),
+  #statsContent .ztable tbody td:nth-child(9) {
+    display: none;
+  }
+  #statsContent .ztable { font-size: 12px; }
+  #statsContent .ztable thead th,
+  #statsContent .ztable tbody td { padding: 8px 6px; }
+
+  /* ──── MARKET — tabla responsiva ──── */
+  .market-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .market-kpi-strip .kpi { padding: 8px; }
+  .market-kpi-strip .kpi-val { font-size: 16px; }
+  .market-kpi-strip .kpi-lab { font-size: 9px; }
+
+  .market-filters-card { padding: 12px; }
+  .market-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .market-filter-field { margin: 0; }
+
+  .market-table-wrap { overflow-x: auto; }
+  .market-table { font-size: 12px; }
+  .market-table thead th,
+  .market-table tbody td { padding: 8px 6px; }
+
+  /* Ocultar columna de fecha en móvil */
+  .market-table .col-mkt-date { display: none; }
+  .market-table .col-mkt-route .market-route {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .market-table .col-mkt-route .market-arrow {
+    transform: rotate(90deg);
+    margin: 0 0 0 12px;
+    display: inline-block;
+  }
+  .market-team-pill {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ──── BRACKET de playoffs ──── */
+  .bracket-v6-wrap { padding: 12px 0 20px; }
+  .bracket-v6-node { font-size: 11px; }
+  .bracket-v6-name { font-size: 11.5px; }
+
+  /* ──── CARDS y contenedores ──── */
+  .card { padding: 14px; }
+  .card-header { margin-bottom: 10px; padding-bottom: 10px; }
+  .card-title { font-size: 12px; letter-spacing: .18em; }
+  .page-title { font-size: 18px; letter-spacing: .18em; }
+  .page-head { margin-bottom: 14px; }
+
+  /* ──── PLAYER HERO ──── */
+  .player-hero { padding: 16px; }
+  .player-hero-main { gap: 14px; }
+  .player-hero-avatar { width: 76px; height: 76px; }
+  .player-hero-name { font-size: 20px; }
+  .player-hero-pig { text-align: left; }
+  .player-hero-pig .pig-value { font-size: 32px; }
+
+  /* ──── ROSTER / TEAM PROFILE ──── */
+  .team-hero-kpis {
+    grid-template-columns: repeat(3, 1fr) !important;
+    min-width: 0 !important;
+    width: 100%;
+  }
+  .team-logo-box-xl { width: 68px; height: 68px; }
+
+  /* ──── BALLON D'OR PODIUM ──── */
+  .bdor-podium-3 { grid-template-columns: 1fr !important; }
+
+  /* ──── KPI STRIPS ──── */
+  .kpi-strip { gap: 6px; }
+  .kpi { padding: 8px 6px; }
+  .kpi-val { font-size: 18px; }
+  .kpi-lab { font-size: 9px; letter-spacing: .12em; }
+
+  /* ──── [B] MODAL MATCH SUMMARY — móvil ──── */
+  .ms-hero {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 14px 8px;
+  }
+  .ms-team-logo { width: 44px; height: 44px; padding: 4px; border-radius: 8px; }
+  .ms-team-logo-empty { font-size: 18px; }
+  .ms-team-name {
+    font-size: 11px;
+    letter-spacing: .08em;
+    line-height: 1.2;
+  }
+  .ms-score { min-width: 80px; }
+  .ms-score-line { font-size: 28px; gap: 8px; }
+  .ms-score-sep { font-size: 20px; }
+  .ms-score-meta { font-size: 9px; letter-spacing: .12em; }
+
+  /* ──── [C] MATCH ROW — Jornadas: nombres largos ──── */
+  .match-row-top {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 8px;
+  }
+  .match-team {
+    max-width: 38vw;
+    min-width: 0;
+  }
+  .match-team-name { font-size: 12px; }
+  .match-team-logo {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px;
+    max-width: 30px;
+  }
+  .match-score {
+    font-size: 18px;
+    min-width: 60px;
+  }
+
+  /* ──── [D] WIDGET PRÓXIMO PARTIDO — móvil ──── */
+
+  /* Hero más compacto en móvil */
+  .hero {
+    padding: 16px 10px;
+  }
+  .hero-top {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .hero-teams {
+    gap: 8px;
+  }
+  .hero-team .logo {
+    width: 56px;
+    height: 56px;
+  }
+  .hero-team .name {
+    font-size: 13px;
+    letter-spacing: .08em;
+  }
+  .hero-team .meta {
+    font-size: 10px;
+  }
+  .hero-vs {
+    font-size: 18px;
+  }
+  .hero-score-live {
+    gap: 8px;
+  }
+  .hero-score-live .hs-team-score {
+    font-size: 26px;
+    min-width: 26px;
+  }
+  .hero-score-live .hs-vs {
+    font-size: 13px;
+  }
+  .hero-live-badge,
+  .hero-final-badge {
+    font-size: 9.5px;
+    padding: 3px 10px;
+  }
+
+  /* Flechas del carrusel: las ocultamos en móvil para evitar cortes.
+     Navegación por dots. */
+  .wc-nav {
+    display: none;
+  }
+
+  /* Dots más visibles en móvil */
+  .wc-dots {
+    padding-top: 10px;
+    gap: 7px;
+  }
+  .wc-dot {
+    width: 8px;
+    height: 8px;
+  }
+  .wc-dot.active {
+    width: 22px;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — MÓVIL PEQUEÑO
+   ============================================================ */
+@media (max-width: 400px) {
+  .public-view { padding: 10px 8px 60px; }
+  .card { padding: 12px; }
+  .page-title { font-size: 16px; }
+  .stats-tab { padding: 7px 12px; font-size: 11px; }
+  .kpi-val { font-size: 16px; }
+
+  /* Ajustar altura de tabla general en móviles muy pequeños */
+  .widget-slot[data-widget="standings"] {
+    min-height: 360px !important;
+    max-height: 400px !important;
+  }
+  .widget-slot[data-widget="standings"] .widget-scroll {
+    max-height: 280px;
+  }
+}
+
+/* ============================================================
+   MARKET — estilos específicos (desktop y tablet)
+   ============================================================ */
+.market-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.market-filters-card { padding: 16px; }
+.market-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.market-filter-field { margin: 0; }
+
+.market-row-clickable { cursor: pointer; transition: background 0.12s; }
+.market-row-clickable:hover { background: rgba(111,168,255,0.05); }
+
+.market-route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.market-team-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+/* ============================================================
+   WIDGET PRÓXIMO PARTIDO — Marcador en vivo / final
+   (v2.6.6 RESTAURADO — este era el bloque faltante)
+   ============================================================ */
+
+/* Badge EN JUEGO parpadeante */
+.hero-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: #B23A3A;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: .2em;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid #B23A3A;
+  animation: heroLivePulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(178,58,58,.55);
+  margin: 0 auto;
+}
+
+.hero-live-badge::before {
+  content: '';
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px #fff;
+  animation: heroLiveDot 1.4s ease-in-out infinite;
+}
+
+@keyframes heroLivePulse {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(178,58,58,.55), 0 0 0 0 rgba(178,58,58,.4);
+    background: #B23A3A;
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(178,58,58,.85), 0 0 0 6px rgba(178,58,58,0);
+    background: #C74A4A;
+  }
+}
+
+@keyframes heroLiveDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .4; transform: scale(.75); }
+}
+
+/* Badge FINAL (no parpadea) */
+.hero-final-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  background: transparent;
+  color: var(--success);
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: .2em;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid rgba(99,194,138,.45);
+  margin: 0 auto;
+}
+
+/* Contenedor del marcador central (reemplaza al VS cuando hay juego) */
+.hero-score-live {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-family: var(--font-display);
+  letter-spacing: .06em;
+  line-height: 1;
+}
+
+.hero-score-live .hs-team-score {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--silver-light);
+  min-width: 38px;
+  text-align: center;
+}
+
+.hero-score-live .hs-team-score.winner {
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(230,196,118,.4);
+}
+
+.hero-score-live .hs-team-score.loser {
+  color: var(--muted);
+}
+
+.hero-score-live .hs-vs {
+  font-size: 18px;
+  color: var(--muted);
+  letter-spacing: .18em;
+  text-transform: lowercase;
+}
+
+/* En móvil, ajustamos tamaños */
+@media (max-width: 600px) {
+  .hero-score-live .hs-team-score {
+    font-size: 30px;
+    min-width: 30px;
+  }
+  .hero-score-live .hs-vs {
+    font-size: 15px;
+  }
+  .hero-live-badge,
+  .hero-final-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    letter-spacing: .16em;
+  }
+}
+
+/* ============================================================
+   [A] FIX MODAL MATCH SUMMARY — evitar desbordes con nombres largos
+   (global, aplica en desktop y móvil)
+   ============================================================ */
+.ms-hero {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.ms-team {
+  min-width: 0;
+  max-width: 100%;
+}
+.ms-team-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  padding: 0 4px;
+}
+.ms-score {
+  min-width: 0;
+}
+.ms-score-line {
+  justify-content: center;
+}
+.ms-team-logo {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================================
+   [C] FIX JORNADAS — nombres largos en match rows
+   (global)
+   ============================================================ */
+.match-row-top {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.match-team {
+  max-width: 100%;
+  min-width: 0;
+}
+.match-team-name {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ============================================================
+   [D] FIX WIDGET PRÓXIMO PARTIDO — carrusel
+   (global)
+   ============================================================ */
+.wc-slide {
+  min-width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+.wc-track {
+  box-sizing: border-box;
+}
+.wc-viewport {
+  box-sizing: border-box;
+}
+
+/* Hero teams — evitar que nombres largos empujen */
+.hero-teams {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.hero-team {
+  min-width: 0;
+  max-width: 100%;
+}
+.hero-team .name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hero-team .logo {
+  max-width: 100%;
+}
+
+/* ============================================================
+   [E] EXTRA — reforzar min-width:0 en contenedores de widgets
+   ============================================================ */
+.widget-slot > .card,
+.widget-slot > .hero {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}

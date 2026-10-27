@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLITZ · COACH PORTAL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- CSS Base (copiados del viewer) -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/forms.css">
+  <link rel="stylesheet" href="css/coach.css">
+  
+  <!-- SDK de Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand-logo">BLITZ</div>
+      <div class="brand-sub">COACH PORTAL</div>
+      
+      <div id="loginError" class="login-error"></div>
+
+      <div class="field" style="text-align: left;">
+        <label>Usuario</label>
+        <input class="input" type="text" id="loginUser" placeholder="Ej: tigres_coach" autocomplete="username">
+      </div>
+      
+      <div class="field" style="text-align: left;">
+        <label>Contraseña</label>
+        <input class="input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <button class="btn btn-primary" id="btnLogin" style="width: 100%; margin-top: 10px; padding: 12px;">
+        INICIAR SESIÓN
+      </button>
+      
+      <div style="margin-top: 20px; font-size: 11px; color: var(--muted);">
+        ¿Problemas para entrar? Contacta al administrador de tu liga.
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuración y SDK -->
+  <script src="config.js"></script>
+  
+  <!-- Lógica del Login (Módulo) -->
+  <script type="module">
+    import { CoachAuth } from './js/auth.js';
+
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+      const user = document.getElementById('loginUser').value.trim();
+      const pass = document.getElementById('loginPass').value;
+      const errDiv = document.getElementById('loginError');
+      const btn = document.getElementById('btnLogin');
+
+      if (!user || !pass) {
+        errDiv.textContent = 'Por favor, llena todos los campos.';
+        errDiv.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'CONECTANDO...';
+      errDiv.style.display = 'none';
+
+      try {
+        // Llamada a la función de login en auth.js
+        const res = await CoachAuth.login(user, pass);
+        
+        if (res.ok) {
+          // Guardar sesión y redirigir al dashboard
+          sessionStorage.setItem('zenith_coach_token', res.token);
+          sessionStorage.setItem('zenith_coach_data', JSON.stringify(res.coach));
+          window.location.href = 'dashboard.html';
+        } else {
+          throw new Error(res.error || 'Credenciales incorrectas');
+        }
+      } catch (e) {
+        // Mostrar error en pantalla
+        errDiv.textContent = e.message;
+        errDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'INICIAR SESIÓN';
+      }
+    });
+
+    // Permitir Enter para enviar
+    document.getElementById('loginPass').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('btnLogin').click();
+    });
+  </script>
+</body>
+</html>

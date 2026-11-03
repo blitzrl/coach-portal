@@ -1,5 +1,5 @@
 export function renderStandingsView(DB, session) {
-  const myTeam = DB.teams.find(t => t.id === session.teamId);
+  const myTeam = DB.teams.find(t => t.id === session.activeTeamId);
   if (!myTeam) return `<div class="card">Equipo no encontrado.</div>`;
 
   const activeSeason = DB.seasons?.find(s => s.active) || DB.seasons?.[0];
@@ -75,7 +75,7 @@ export function renderStandingsView(DB, session) {
           </thead>
           <tbody>
             ${standings.map(r => `
-              <tr style="${r.teamId === session.teamId ? 'background:rgba(111,168,255,0.1); font-weight:bold;' : ''}">
+              <tr style="${r.teamId === session.activeTeamId ? 'background:rgba(111,168,255,0.1); font-weight:bold;' : ''}">
                 <td style="border-left: 4px solid ${r.zoneColor};"><span class="pos-num ${r.pos <= 3 ? 'top' : ''}">${r.pos}</span></td>
                 <td>
                   <div class="team-cell">

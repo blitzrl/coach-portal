@@ -30,10 +30,13 @@
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="font-family:var(--font-display); font-size:20px; letter-spacing:.2em; color:var(--silver-light);">ZENITH</div>
         <div style="width:1px; height:20px; background:var(--border);"></div>
+        
+        <!-- 🔥 SELECTOR DE EQUIPO -->
+        <select id="teamSelector" class="select" style="display:none; max-width:160px; padding:4px 8px; font-size:12px; height:auto; background:var(--bg-elev); border:1px solid var(--border);"></select>
         <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent);">Mi Equipo</div>
       </div>
       <div style="display:flex; align-items:center; gap:16px;">
-        <div id="headerCoachName" style="font-size:12px; color:var(--muted);">Coach</div>
+        <div id="headerCoachName" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline;" title="Ver mi perfil">Coach</div>
         <button class="btn btn-sm btn-ghost" id="btnLogout" style="border-color:var(--danger); color:var(--danger);">SALIR</button>
       </div>
     </header>
@@ -55,6 +58,6 @@
   <div class="toast-root" id="toastRoot"></div>
 
   <script src="config.js"></script>
-  <script type="module" src="js/app.js?v=44"></script>
+  <script type="module" src="js/app.js?v=62"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-import { openModal } from '../../services/ui.js?v=64';
+import { openModal } from '../services/ui.js?v=64';
 
 export function renderResultsView(DB, session) {
   const myTeam = DB.teams.find(t => t.id === session.activeTeamId);

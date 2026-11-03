@@ -1,12 +1,12 @@
-import { toast } from '../services/ui.js?v=58';
-import { loadPortalDB, getSupabase } from '../services/supabase.js?v=58';
-import { openSigningWizard } from './signingWizard.js?v=58';
-import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=58';
+import { toast } from '../../services/ui.js?v=63';
+import { loadPortalDB, getSupabase } from '../../services/supabase.js?v=63';
+import { openSigningWizard } from '../signingWizard.js?v=63';
+import { getNationFlag, getRankColor, getRankLabelResponsive } from '../../data/nations.js?v=63';
 
 let _tempRoster = []; 
 
 export function renderAlignmentView(DB, session) {
-  const team = DB.teams.find(t => t.id === session.teamId);
+  const team = DB.teams.find(t => t.id === session.activeTeamId);
   if (!team) return `<div class="card">No se encontró tu equipo.</div>`;
 
   _tempRoster = (team.roster || []).map(r => ({ ...r }));
@@ -67,7 +67,6 @@ export function renderAlignmentView(DB, session) {
 
 function renderPlayerCard(p, DB, session) {
   const hasContract = p.contractId || p.status === 'loaned';
-  // 🔥 FIX: Ahora sí llama correctamente a getNationFlag
   const flag = p.nationalityCode ? getNationFlag(p.nationalityCode) : '';
   const rankColor = getRankColor(p.rank, p.rankLevel);
   const rankLabel = getRankLabelResponsive(p.rank, p.rankLevel, p.rankDivision);
@@ -167,7 +166,7 @@ export function bindAlignmentEvents(DB, session) {
       btnSave.textContent = 'GUARDANDO...';
       
       const { data, error } = await getSupabase().rpc('coach_update_lineup', {
-        p_team_id: session.teamId,
+        p_team_id: session.activeTeamId,
         p_roster: _tempRoster
       });
       

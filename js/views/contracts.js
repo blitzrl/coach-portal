@@ -1,9 +1,12 @@
-import { toast } from '../services/ui.js?v=45';
+import { toast } from '../../services/ui.js?v=63';
+import { getSupabase } from '../../services/supabase.js?v=63';
 
 function formatMoney(amount) { return Number(amount || 0).toLocaleString('en-US'); }
 
 export function renderContractsView(DB, session) {
-  const team = DB.teams.find(t => t.id === session.teamId);
+  const team = DB.teams.find(t => t.id === session.activeTeamId);
+  if(!team) return `<div class="card">Equipo no encontrado</div>`;
+  
   const myPlayers = DB.players.filter(p => team.roster.some(r => r.playerId === p.id));
 
   return `
@@ -91,7 +94,7 @@ export function renderContractsView(DB, session) {
 export function bindContractsEvents(DB, session) {
   document.querySelectorAll('[data-firmar-contrato]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      const { openSigningWizard } = await import('./signingWizard.js?v=45');
+      const { openSigningWizard } = await import('../signingWizard.js?v=63');
       openSigningWizard(DB, session, btn.dataset.firmarContrato, false);
     });
   });

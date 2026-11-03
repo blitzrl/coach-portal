@@ -1,10 +1,10 @@
-import { createCoachRequest, cancelCoachRequest } from '../services/supabase.js?v=58';
-import { openLoanWizard } from './loanWizard.js?v=58';
-import { openSigningWizard } from './signingWizard.js?v=58';
-import { showPlayerProfile } from './playerProfile.js?v=58';
-import { toast } from '../services/ui.js?v=58';
-import { calculatePlayerPrice } from '../services/economy.js?v=58';
-import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=58';
+import { createCoachRequest, cancelCoachRequest } from '../services/supabase.js?v=63';
+import { openLoanWizard } from './loanWizard.js?v=63';
+import { openSigningWizard } from './signingWizard.js?v=63';
+import { showPlayerProfile } from './playerProfile.js?v=63';
+import { toast } from '../services/ui.js?v=63';
+import { calculatePlayerPrice } from '../services/economy.js?v=63';
+import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=63';
 
 let _activeTab = 'players';
 let _searchQuery = '';
@@ -17,7 +17,7 @@ export function renderMarketView(DB, session) {
   const marketSettings = DB.config.marketSettings || { open: true };
   const isOpen = marketSettings.open;
 
-  const allTeams = DB.teams.filter(t => t.id !== session.teamId);
+  const allTeams = DB.teams.filter(t => t.id !== session.activeTeamId);
   const allRanks = [...new Set(DB.players.map(p => p.rank).filter(Boolean))].sort();
 
   const myOffers = DB.requests.filter(r => r.from_coach_id === session.coachId && r.status === 'pending');
@@ -89,7 +89,7 @@ function applyFilters(players, DB) {
 function renderPlayers(DB, session, isOpen) {
   let availablePlayers = DB.players.filter(p => {
     const team = DB.teams.find(t => (t.roster || []).some(r => r.playerId === p.id));
-    return team && team.id !== session.teamId;
+    return team && team.id !== session.activeTeamId;
   });
 
   availablePlayers = applyFilters(availablePlayers, DB);
@@ -112,7 +112,6 @@ function renderPlayers(DB, session, isOpen) {
             ${availablePlayers.map(p => {
               const team = DB.teams.find(t => (t.roster || []).some(r => r.playerId === p.id));
               const priceData = calculatePlayerPrice(p, { pig: p.pig || 0 }, DB.config.economy);
-              // 🔥 FIX: Usando getNationFlag correctamente
               const flag = p.nationalityCode ? getNationFlag(p.nationalityCode) : '';
               const rankColor = getRankColor(p.rank, p.rankLevel);
               const rankLine = getRankLabelResponsive(p.rank, p.rankLevel, p.rankDivision);
@@ -169,7 +168,6 @@ function renderFreeAgents(DB, session, isOpen) {
           <tbody>
             ${freeAgents.map(p => {
               const priceData = calculatePlayerPrice(p, { pig: p.pig || 0 }, DB.config.economy);
-              // 🔥 FIX: Usando getNationFlag correctamente
               const flag = p.nationalityCode ? getNationFlag(p.nationalityCode) : '';
               const rankColor = getRankColor(p.rank, p.rankLevel);
               const rankLine = getRankLabelResponsive(p.rank, p.rankLevel, p.rankDivision);
@@ -199,7 +197,7 @@ function renderFreeAgents(DB, session, isOpen) {
 }
 
 function renderStaff(DB, session, isOpen) {
-  let availableStaff = DB.coaches.filter(c => c.teamId !== session.teamId);
+  let availableStaff = DB.coaches.filter(c => !(c.teamIds || []).includes(session.activeTeamId));
   if (_searchQuery) availableStaff = availableStaff.filter(c => c.name.toLowerCase().includes(_searchQuery.toLowerCase()));
 
   return `
@@ -217,7 +215,7 @@ function renderStaff(DB, session, isOpen) {
           </thead>
           <tbody>
             ${availableStaff.map(c => {
-              const team = DB.teams.find(t => t.id === c.teamId);
+              const teamNames = (c.teamIds || []).map(id => DB.teams.find(t => t.id === id)?.name).filter(Boolean).join(', ') || 'Agente Libre';
               return `
                 <tr>
                   <td class="col-name">
@@ -226,11 +224,11 @@ function renderStaff(DB, session, isOpen) {
                       <span style="font-weight:600; color:var(--silver-light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.name}</span>
                     </div>
                   </td>
-                  <td class="col-team" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px;">${team ? team.name : '<span style="color:var(--gold)">Agente Libre</span>'}</td>
+                  <td class="col-team" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px;">${teamNames}</td>
                   <td class="col-rank" style="font-size:11px;">${c.roleType === 'coach' ? 'Head Coach' : 'Asistente'}</td>
                   <td class="num col-action">
-                    <button class="btn btn-sm ${team ? '' : 'btn-primary'}" ${!isOpen ? 'disabled' : ''} data-staff="${c.id}" style="padding:4px 6px; font-size:9px; width:100%;">
-                      ${team ? 'OFRECER' : 'CONTRATAR'}
+                    <button class="btn btn-sm ${teamNames === 'Agente Libre' ? 'btn-primary' : ''}" ${!isOpen ? 'disabled' : ''} data-staff="${c.id}" style="padding:4px 6px; font-size:9px; width:100%;">
+                      ${teamNames === 'Agente Libre' ? 'CONTRATAR' : 'OFRECER'}
                     </button>
                   </td>
                 </tr>
@@ -358,7 +356,7 @@ function bindActionButtons(DB, session) {
         await createCoachRequest(session.token, 'transfer', null, { 
             playerId, 
             playerName: player.name, 
-            targetTeamId: session.teamId, 
+            targetTeamId: session.activeTeamId, 
             price: priceData.price 
         });
         toast('✅ Solicitud de fichaje enviada al Admin', 'success');

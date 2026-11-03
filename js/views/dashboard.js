@@ -1,14 +1,14 @@
-import { renderAlignmentView, bindAlignmentEvents } from './alignment.js?v=56';
-import { renderResultsView, bindResultsEvents } from './results.js?v=56';
-import { renderAnalysisView } from './analysis.js?v=56';
-import { renderContractsView, bindContractsEvents } from './contracts.js?v=56';
-import { renderStandingsView } from './standings.js?v=56';
+import { renderAlignmentView, bindAlignmentEvents } from './team/alignment.js?v=63';
+import { renderResultsView, bindResultsEvents } from './team/results.js?v=63';
+import { renderAnalysisView } from './team/analysis.js?v=63';
+import { renderContractsView, bindContractsEvents } from './team/contracts.js?v=63';
+import { renderStandingsView } from './team/standings.js?v=63';
 
 let _activeTeamTab = 'alignment';
 
 export function renderDashboardView(DB, session) {
-  const team = DB.teams?.find(t => t.id === session.teamId);
-  if (!team) return `<div class="card">No se encontró tu equipo.</div>`;
+  const team = DB.teams.find(t => t.id === session.activeTeamId);
+  if (!team) return `<div class="card">No se encontró tu equipo. Selecciona otro en la cabecera.</div>`;
 
   let myPos = '—';
   try {
@@ -16,7 +16,6 @@ export function renderDashboardView(DB, session) {
     const division = DB.divisions?.find(d => d.id === team.divisionId);
     
     if (activeSeason && division) {
-      // Cálculo rápido de posición para el badge superior
       const teamsInDiv = DB.teams.filter(t => t.divisionId === division.id);
       const matches = DB.matches.filter(m => m.divisionId === division.id && m.status === 'finished');
       const ptsMap = {};

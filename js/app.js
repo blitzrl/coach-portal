@@ -1,16 +1,16 @@
 import { CoachAuth } from './auth.js';
-import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=46'; 
-import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=46';
-import { renderMarketView, bindMarketEvents } from './views/market.js?v=46';
-import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=46';
-import { renderEconomyView } from './views/economy.js?v=46';
+import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=62'; 
+import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=62';
+import { renderMarketView, bindMarketEvents } from './views/market.js?v=62';
+import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=62';
+import { renderEconomyView } from './views/economy.js?v=62';
+import { showCoachSelfProfile } from './views/coachProfile.js?v=62'; // 🔥 NUEVO
 
 let DB = null;
 let currentSession = null;
 let _currentView = 'dashboard';
 let _sessionCheckInterval = null;
 
-// 🔥 EXPONEMOS LA FUNCIÓN DE RECARGA PARA QUE ALIGNMENT.JS PUEDA USARLA
 window.refreshPortalView = () => {
   if (_currentView) renderView(_currentView);
 };
@@ -24,6 +24,18 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     currentSession = session;
+    
+    // 🔥 Lógica para seleccionar equipo activo
+    const savedTeamId = localStorage.getItem('zenith_active_team');
+    if (savedTeamId && currentSession.teamIds.includes(savedTeamId)) {
+      currentSession.activeTeamId = savedTeamId;
+    } else {
+      currentSession.activeTeamId = currentSession.teamIds[0] || null;
+      if (currentSession.activeTeamId) {
+        localStorage.setItem('zenith_active_team', currentSession.activeTeamId);
+      }
+    }
+
     DB = await loadPortalDB();
 
     try {
@@ -36,6 +48,20 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     updateHeader();
     initRouter();
+
+    // 🔥 Evento del selector de equipo
+    document.getElementById('teamSelector')?.addEventListener('change', (e) => {
+      currentSession.activeTeamId = e.target.value;
+      localStorage.setItem('zenith_active_team', e.target.value);
+      updateHeader();
+      renderView(_currentView);
+    });
+
+    // 🔥 Evento para ver el perfil del coach
+    document.getElementById('headerCoachName')?.addEventListener('click', () => {
+      const coach = DB.coaches.find(c => c.id === currentSession.coachId);
+      if (coach) showCoachSelfProfile(coach, DB);
+    });
 
     _sessionCheckInterval = setInterval(async () => {
       const check = await CoachAuth.validateSession();
@@ -78,17 +104,35 @@ window.addEventListener('DOMContentLoaded', async () => {
 });
 
 function updateHeader() {
-  const team = DB.teams.find(t => t.id === currentSession.teamId);
+  const team = DB.teams.find(t => t.id === currentSession.activeTeamId);
   const coach = DB.coaches.find(c => c.id === currentSession.coachId);
-  if (document.getElementById('headerTeamName')) document.getElementById('headerTeamName').textContent = team ? team.name : 'Mi Equipo';
-  if (document.getElementById('headerCoachName')) document.getElementById('headerCoachName').textContent = coach ? coach.name : 'Coach';
+  
+  if (document.getElementById('headerTeamName')) {
+    document.getElementById('headerTeamName').textContent = team ? team.name : 'Mi Equipo';
+  }
+  if (document.getElementById('headerCoachName')) {
+    document.getElementById('headerCoachName').textContent = coach ? coach.name : 'Coach';
+  }
+
+  const selector = document.getElementById('teamSelector');
+  if (selector) {
+    if (currentSession.teamIds && currentSession.teamIds.length > 1) {
+      selector.style.display = 'block';
+      selector.innerHTML = currentSession.teamIds.map(id => {
+        const t = DB.teams.find(x => x.id === id);
+        return `<option value="${id}" ${id === currentSession.activeTeamId ? 'selected' : ''}>${t ? t.name : 'Equipo'}</option>`;
+      }).join('');
+    } else {
+      selector.style.display = 'none';
+    }
+  }
 }
 
 function updateBadge() {
   const badge = document.getElementById('inboxBadge');
   if (!badge) return;
   const unread = DB.notifications.filter(n => n.coach_id === currentSession.coachId && !n.read_at && !n.archived_at).length;
-  const pending = DB.requests.filter(r => r.to_coach_id === currentSession.coachId && r.status === 'pending' && r.type !== 'contract_sign').length; // Ignoramos contract_sign
+  const pending = DB.requests.filter(r => r.to_coach_id === currentSession.coachId && r.status === 'pending' && r.type !== 'contract_sign').length;
   const total = unread + pending;
   badge.textContent = total;
   badge.style.display = total > 0 ? 'inline-block' : 'none';

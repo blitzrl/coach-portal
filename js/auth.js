@@ -28,10 +28,11 @@ export const CoachAuth = {
       return { ok: false, error: error?.message || data?.error || 'Sesión expirada' };
     }
 
-    // 🔥 Normalizar teamIds
+    // 🔥 SPRINT 2: Normalizar teamIds (plural) + orgName
     const teamIds = data.teamIds || (data.teamId ? [data.teamId] : []);
+    const orgName = data.orgName || '';
     
-    return { ...data, teamIds };
+    return { ...data, teamIds, orgName };
   },
 
   async logout() {

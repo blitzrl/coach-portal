@@ -3,12 +3,12 @@ function formatMoney(amount) {
 }
 
 export function renderEconomyView(DB, session) {
-  const team = DB.teams.find(t => t.id === session.teamId);
+  const team = DB.teams.find(t => t.id === session.activeTeamId);
   if (!team) return `<div class="card">Equipo no encontrado.</div>`;
 
   const balance = team.money || 0;
   const isDebt = balance < 0;
-  const ledger = (DB.config?.economyLedger || []).filter(l => l.teamId === session.teamId);
+  const ledger = (DB.config?.economyLedger || []).filter(l => l.teamId === session.activeTeamId);
 
   return `
     <div class="card" style="margin-bottom:20px; border-left:4px solid ${isDebt ? 'var(--danger)' : 'var(--success)'}">

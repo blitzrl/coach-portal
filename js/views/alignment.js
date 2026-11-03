@@ -1,7 +1,7 @@
-import { toast } from '../../services/ui.js?v=63';
-import { loadPortalDB, getSupabase } from '../../services/supabase.js?v=63';
-import { openSigningWizard } from '../signingWizard.js?v=63';
-import { getNationFlag, getRankColor, getRankLabelResponsive } from '../../data/nations.js?v=63';
+import { toast } from '../services/ui.js?v=64';
+import { loadPortalDB, getSupabase } from '../services/supabase.js?v=64';
+import { openSigningWizard } from './signingWizard.js?v=64';
+import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=64';
 
 let _tempRoster = []; 
 

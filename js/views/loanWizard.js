@@ -1,6 +1,6 @@
 import { getDB } from '../services/storage.js';
-import { createCoachRequest } from '../services/supabase.js';
-import { toast, openModal, closeTopModal } from '../services/ui.js';
+import { createCoachRequest } from '../services/supabase.js?v=64';
+import { toast, openModal, closeTopModal } from '../services/ui.js?v=64';
 
 function formatMoney(amount) {
   return Number(amount || 0).toLocaleString('en-US');
@@ -145,11 +145,10 @@ export function openLoanWizard(DB, session, playerId) {
           try {
             btnNext.disabled = true; btnNext.textContent = 'ENVIANDO...';
             
-            // INYECTAMOS EL FROM_TEAM_ID (La solución al error de "Falta equipo emisor")
             const payload = {
               playerId: player.id,
               playerName: player.name,
-              from_team_id: session.teamId,
+              from_team_id: session.activeTeamId,
               durationMatchdays: state.durationMatchdays,
               uniquePrice: state.uniquePrice,
               perMatchdayPrice: state.perMatchdayPrice,

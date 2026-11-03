@@ -46,7 +46,26 @@ export async function loadRemoteDB() {
     playoffs: (playoffs.data || []).map(r => ({ divisionId: r.division_id, seasonId: r.season_id, status: r.data?.status || 'pending', bracket: r.data?.bracket || null, championId: r.data?.championId || null })),
     news: (news.data || []).map(r => ({ id: r.id, date: r.date, published: r.published, pinned: r.pinned, title: r.data?.title || '', body: r.data?.body || '', category: r.data?.category || 'GENERAL', customCategory: r.data?.customCategory || '', banner: r.data?.banner || '', featured: !!r.data?.featured, goldenFrame: !!r.data?.goldenFrame, blocks: r.data?.blocks || [] })),
     archivedSeasons: (archived.data || []).map(r => ({ id: r.id, name: r.name, year: r.year, archivedAt: r.archived_at, championByDivision: r.data?.championByDivision || {}, movements: r.data?.movements || [], snapshot: r.data?.snapshot || null })),
-    coaches: (coaches.data || []).map(r => ({ id: r.id, name: r.name, teamId: r.team_id, profilePicture: r.data?.profilePicture || '', roleType: r.data?.roleType || 'coach' })),
+    // 🔥 SPRINT 2: coaches normalizados (teamIds plural + orgName)
+    coaches: (coaches.data || []).map(r => {
+      const data = r.data || {};
+      return {
+        id: r.id,
+        name: r.name,
+        teamIds: data.teamIds || (r.team_id ? [r.team_id] : []),
+        orgName: data.orgName || '',
+        profilePicture: data.profilePicture || '',
+        roleType: data.roleType || 'coach',
+        playerId: data.playerId || null,
+        nationalityCode: data.nationalityCode || '',
+        rlTracker: data.rlTracker || '',
+        discordId: data.discordId || '',
+        socials: data.socials || {},
+        customLinks: data.customLinks || [],
+        history: data.history || [],
+        trophies: data.trophies || []
+      };
+    }),
     config: configData, widgets: configData.widgets || null, trophies: configData.trophies || {}, transferLog: configData.transferLog || [], transferBannerBg: configData.transferBannerBg || '', economyLedger: configData.economyLedger || [], contracts: configData.contracts || [], viewSeasonId: null
   };
 }
@@ -90,11 +109,29 @@ export async function loadPortalDB() {
   return {
     config: cfgData, 
     seasons: (seasonsRes.data || []).map(r => ({ id: r.id, name: r.name, year: r.year, active: r.active })),
-    // 🔥 FIX: Añadido r.data?.config || {} para los colores de la tabla
     divisions: (divisionsRes.data || []).map(r => ({ id: r.id, seasonId: r.season_id, name: r.name, tier: r.tier, visible: r.visible, config: r.data?.config || {} })),
     teams: (teamsRes.data || []).map(r => ({ id: r.id, divisionId: r.division_id, seasonId: r.season_id, name: r.name, logo: r.data?.logo || '', coach: r.data?.coach || '', assistant: r.data?.assistant || '', roster: r.data?.roster || [], money: r.data?.money || 0 })),
     players: (playersRes.data || []).map(r => ({ id: r.id, divisionId: r.division_id, name: r.name, profilePicture: r.data?.profilePicture || '', nationalityCode: r.data?.nationalityCode || '', rank: r.data?.rank || '', rankLevel: r.data?.rankLevel ?? 2, rankDivision: r.data?.rankDivision || 'II', marketValue: r.data?.marketValue || null, status: r.data?.status || 'owned', onLoan: r.data?.onLoan || false, ownerTeamId: r.data?.ownerTeamId || null, contractId: r.data?.contractId || null })),
-    coaches: (coachesRes.data || []).map(r => ({ id: r.id, name: r.name, teamId: r.team_id, profilePicture: r.data?.profilePicture || '', roleType: r.data?.roleType || 'coach' })),
+    // 🔥 SPRINT 2: coaches normalizados (FIX: antes solo traía teamId singular y se rompía market.js/coachProfile.js)
+    coaches: (coachesRes.data || []).map(r => {
+      const data = r.data || {};
+      return {
+        id: r.id,
+        name: r.name,
+        teamIds: data.teamIds || (r.team_id ? [r.team_id] : []),
+        orgName: data.orgName || '',
+        profilePicture: data.profilePicture || '',
+        roleType: data.roleType || 'coach',
+        playerId: data.playerId || null,
+        nationalityCode: data.nationalityCode || '',
+        rlTracker: data.rlTracker || '',
+        discordId: data.discordId || '',
+        socials: data.socials || {},
+        customLinks: data.customLinks || [],
+        history: data.history || [],
+        trophies: data.trophies || []
+      };
+    }),
     matches: (matchesRes.data || []).map(r => mergeRow(r)),
     news: newsRes.data || [], 
     requests: reqsRes.data || [], 

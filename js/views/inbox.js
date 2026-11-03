@@ -1,6 +1,6 @@
-import { respondPortalRequest, cancelCoachRequest, markNotificationRead, archiveCoachNotifications, getSupabase, loadPortalDB } from '../services/supabase.js?v=46';
-import { toast, openModal, closeTopModal } from '../services/ui.js?v=46';
-import { openSigningWizard } from './signingWizard.js?v=46';
+import { respondPortalRequest, cancelCoachRequest, markNotificationRead, archiveCoachNotifications, getSupabase, loadPortalDB } from '../services/supabase.js?v=64';
+import { toast, openModal, closeTopModal } from '../services/ui.js?v=64';
+import { openSigningWizard } from './signingWizard.js?v=64';
 
 function formatMoney(amount) { return Number(amount || 0).toLocaleString('en-US'); }
 
@@ -9,7 +9,6 @@ let _selectedNotifs = new Set();
 let _showHistory = false;
 
 export function renderInboxView(DB, session) {
-  // 🔥 FILTRAMOS PARA NO MOSTRAR LAS FIRMAS INTERNAS (contract_sign)
   const pendingRequests = DB.requests.filter(r => r.to_coach_id === session.coachId && r.status === 'pending' && r.type !== 'contract_sign');
   const myRequests = DB.requests.filter(r => r.from_coach_id === session.coachId && r.status === 'pending' && r.type !== 'contract_sign');
   

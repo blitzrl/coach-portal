@@ -1,6 +1,6 @@
-import { openModal } from '../services/ui.js?v=58';
-import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=58';
-import { aggregatePlayerStats } from '../services/statistics.js?v=58';
+import { openModal, toast } from '../services/ui.js?v=59';
+import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=59';
+import { aggregatePlayerStats } from '../services/statistics.js?v=59';
 
 export function showPlayerProfile(player, DB) {
   if (!player) return;
@@ -22,6 +22,19 @@ export function showPlayerProfile(player, DB) {
   const finalPig = stats.pig || player.pig || 0;
   const finalValue = player.marketValue || (finalPig * 1000) || 0;
 
+  // Helper para íconos de redes
+  const getSocialIcon = (platform) => {
+    switch (platform) {
+      case 'discord': return 'fa-brands fa-discord';
+      case 'twitter': return 'fa-brands fa-twitter';
+      case 'twitch': return 'fa-brands fa-twitch';
+      case 'youtube': return 'fa-brands fa-youtube';
+      case 'instagram': return 'fa-brands fa-instagram';
+      case 'tiktok': return 'fa-brands fa-tiktok';
+      default: return 'fa-solid fa-link';
+    }
+  };
+
   openModal({
     id: 'player-profile-' + player.id,
     title: 'PERFIL DEL JUGADOR',
@@ -40,6 +53,24 @@ export function showPlayerProfile(player, DB) {
             <span class="badge">${team ? team.name : 'Agente Libre'}</span>
             <span class="badge">${player.platform || '—'}</span>
           </div>
+          
+          <!-- 🔥 NUEVA SECCIÓN: Discord ID y Redes Sociales -->
+          ${(player.discordId || (player.socials && player.socials.length > 0)) ? `
+            <div style="display:flex; gap:8px; margin-top:12px; align-items:center; flex-wrap:wrap;">
+              ${player.discordId ? `
+                <button class="btn btn-sm" id="copyDiscordBtn" data-id="${player.discordId}" style="cursor:pointer; border-color:rgba(88, 101, 242, 0.4); color:#5865F2; background:rgba(88, 101, 242, 0.1); display:flex; gap:6px; align-items:center;" title="Copiar ID de Discord">
+                  <i class="fa-brands fa-discord"></i> ${player.discordId} <i class="fa-regular fa-copy" style="margin-left:4px; opacity:0.7;"></i>
+                </button>
+              ` : ''}
+              
+              ${(player.socials || []).map(s => `
+                <a href="${s.url}" target="_blank" class="btn btn-sm" style="width:32px; height:32px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center;" title="${s.platform}">
+                  <i class="${getSocialIcon(s.platform)}"></i>
+                </a>
+              `).join('')}
+            </div>
+          ` : ''}
+          
         </div>
       </div>
       
@@ -62,6 +93,19 @@ export function showPlayerProfile(player, DB) {
         <a href="https://blitzrl.github.io/blitzRL-viewer/#/performance" target="_blank" style="color:var(--accent); text-decoration:underline; font-weight:600;">blitzrl.github.io/blitzRL-viewer/#/performance</a>
       </div>
     `,
-    footer: `<button class="btn btn-ghost" data-close>CERRAR</button>`
+    footer: `<button class="btn btn-ghost" data-close>CERRAR</button>`,
+    onMount: (root) => {
+      // 🔥 NUEVO: Copiar ID de Discord
+      root.querySelector('#copyDiscordBtn')?.addEventListener('click', (e) => {
+        const discordId = e.currentTarget.dataset.id;
+        if (!discordId) return;
+        navigator.clipboard.writeText(discordId).then(() => {
+          toast('✅ ID de Discord copiado', 'success');
+        }).catch(err => {
+          console.error('Error al copiar:', err);
+          toast('No se pudo copiar el ID', 'error');
+        });
+      });
+    }
   });
 }

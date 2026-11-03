@@ -1,7 +1,7 @@
-import { getRankColor } from '../data/nations.js?v=57';
+import { getRankColor } from '../../data/nations.js?v=63';
 
 export function renderAnalysisView(DB, session) {
-  const myTeam = DB.teams.find(t => t.id === session.teamId);
+  const myTeam = DB.teams.find(t => t.id === session.activeTeamId);
   if (!myTeam) return `<div class="card">Equipo no encontrado.</div>`;
 
   const statsMap = {};
@@ -10,13 +10,13 @@ export function renderAnalysisView(DB, session) {
   });
 
   DB.matches.filter(m => m.status === 'finished').forEach(m => {
-    const isHome = m.teamAId === session.teamId;
-    const isAway = m.teamBId === session.teamId;
+    const isHome = m.teamAId === session.activeTeamId;
+    const isAway = m.teamBId === session.activeTeamId;
     if (!isHome && !isAway) return;
 
     (m.games || []).forEach(g => {
       const winnerId = g.scoreA > g.scoreB ? m.teamAId : m.teamBId;
-      const myTeamWon = winnerId === session.teamId;
+      const myTeamWon = winnerId === session.activeTeamId;
 
       (g.players || []).forEach(p => {
         if (statsMap[p.playerId]) {

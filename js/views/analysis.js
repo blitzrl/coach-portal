@@ -1,4 +1,4 @@
-import { getRankColor } from '../../data/nations.js?v=63';
+import { getRankColor } from '../data/nations.js?v=64';
 
 export function renderAnalysisView(DB, session) {
   const myTeam = DB.teams.find(t => t.id === session.activeTeamId);

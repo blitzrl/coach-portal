@@ -1,13 +1,13 @@
 import { getDB } from '../services/storage.js';
-import { getSupabase, createCoachRequest, respondPortalRequest } from '../services/supabase.js?v=51';
-import { toast, openModal, closeTopModal } from '../services/ui.js?v=51';
-import { calculatePlayerPrice } from '../services/economy.js?v=51';
+import { getSupabase, createCoachRequest, respondPortalRequest } from '../services/supabase.js?v=64';
+import { toast, openModal, closeTopModal } from '../services/ui.js?v=64';
+import { calculatePlayerPrice } from '../services/economy.js?v=64';
 
 export function openSigningWizard(DB, session, playerId, isLoan = false, prefillData = null, counterTargetTeamId = null) {
   const player = DB.players.find(p => p.id === playerId);
   if (!player) return toast('Jugador no encontrado', 'error');
 
-  const myTeam = DB.teams.find(t => t.id === session.teamId);
+  const myTeam = DB.teams.find(t => t.id === session.activeTeamId);
   const isInternalSigning = myTeam && myTeam.roster.some(r => r.playerId === playerId);
   
   const originTeam = DB.teams.find(t => (t.roster || []).some(r => r.playerId === playerId));
@@ -16,13 +16,13 @@ export function openSigningWizard(DB, session, playerId, isLoan = false, prefill
   const priceData = calculatePlayerPrice(player, { pig: player.pig || 0 }, DB.config.economy);
   const basePlayerValue = player.marketValue || priceData.price;
 
-  const fromTeamId = session.teamId; 
-  const toTeamId = isInternalSigning ? session.teamId : (counterTargetTeamId || originTeam?.id);
+  const fromTeamId = session.activeTeamId; 
+  const toTeamId = isInternalSigning ? session.activeTeamId : (counterTargetTeamId || originTeam?.id);
   const toTeamName = isInternalSigning ? myTeam.name : (DB.teams.find(t => t.id === toTeamId)?.name || 'Equipo Rival');
 
   if (isFreeAgent && !isInternalSigning && !counterTargetTeamId) {
     if (!confirm(`¿Enviar solicitud de fichaje al Admin por ${player.name}?`)) return;
-    getSupabase().rpc('coach_sign_free_agent', { p_token: session.token, p_player_id: player.id, p_team_id: session.teamId })
+    getSupabase().rpc('coach_sign_free_agent', { p_token: session.token, p_player_id: player.id, p_team_id: session.activeTeamId })
       .then(({ error }) => {
         if (error) toast('Error: ' + error.message, 'error');
         else { toast('✅ Solicitud enviada al Admin', 'success'); window.dispatchEvent(new HashChangeEvent('hashchange')); }
@@ -213,8 +213,7 @@ export function openSigningWizard(DB, session, playerId, isLoan = false, prefill
             };
 
             if (isInternalSigning) {
-              // 🔥 FIX: Usamos la RPC para insertar (evita bloqueo RLS) y luego la auto-aceptamos
-              const res = await createCoachRequest(session.token, 'contract_sign', session.teamId, payload);
+              const res = await createCoachRequest(session.token, 'contract_sign', session.activeTeamId, payload);
               if (res && res.request_id) {
                 await respondPortalRequest(session.token, 'accept', res.request_id);
               }
@@ -226,7 +225,6 @@ export function openSigningWizard(DB, session, playerId, isLoan = false, prefill
             }
 
             closeTopModal();
-            // Damos tiempo al Gestor (radar de 10s) para procesar y subir a Supabase
             setTimeout(() => {
               if (window.refreshPortalView) window.refreshPortalView();
             }, 8000);

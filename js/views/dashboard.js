@@ -1,8 +1,8 @@
-import { renderAlignmentView, bindAlignmentEvents } from './team/alignment.js?v=63';
-import { renderResultsView, bindResultsEvents } from './team/results.js?v=63';
-import { renderAnalysisView } from './team/analysis.js?v=63';
-import { renderContractsView, bindContractsEvents } from './team/contracts.js?v=63';
-import { renderStandingsView } from './team/standings.js?v=63';
+import { renderAlignmentView, bindAlignmentEvents } from './alignment.js?v=64';
+import { renderResultsView, bindResultsEvents } from './results.js?v=64';
+import { renderAnalysisView } from './analysis.js?v=64';
+import { renderContractsView, bindContractsEvents } from './contracts.js?v=64';
+import { renderStandingsView } from './standings.js?v=64';
 
 let _activeTeamTab = 'alignment';
 

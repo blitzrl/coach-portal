@@ -1,0 +1,63 @@
+import { openModal, toast } from '../services/ui.js?v=62';
+import { getNationFlag } from '../data/nations.js?v=62';
+
+export function showCoachSelfProfile(coach, DB) {
+  if (!coach) return;
+
+  const teamNames = (coach.teamIds || []).map(id => DB.teams.find(t => t.id === id)?.name).filter(Boolean).join(', ') || 'Agente Libre';
+  const flag = coach.nationalityCode ? getNationFlag(coach.nationalityCode) : '';
+
+  const socialsList = [];
+  if (coach.socials?.twitter) socialsList.push({ icon: 'fa-brands fa-twitter', url: coach.socials.twitter, label: 'Twitter' });
+  if (coach.socials?.twitch) socialsList.push({ icon: 'fa-brands fa-twitch', url: coach.socials.twitch, label: 'Twitch' });
+  if (coach.socials?.youtube) socialsList.push({ icon: 'fa-brands fa-youtube', url: coach.socials.youtube, label: 'YouTube' });
+  if (coach.socials?.instagram) socialsList.push({ icon: 'fa-brands fa-instagram', url: coach.socials.instagram, label: 'Instagram' });
+
+  openModal({
+    id: 'coach-self-profile',
+    title: 'MI PERFIL DE COACH',
+    body: `
+      <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px">
+        <div class="team-logo-box-xl" style="border-radius:50%">
+          ${coach.profilePicture ? `<img src="${coach.profilePicture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
+        </div>
+        <div>
+          <h2 style="font-family:var(--font-display); font-size:24px; color:var(--silver-light); margin:0;">${coach.name} ${flag}</h2>
+          <div style="color:var(--accent); font-weight:600; margin-top:4px">${coach.roleType === 'coach' ? 'Head Coach' : 'Asistente'}</div>
+          <div style="color:var(--muted); font-size:12px; margin-top:4px">${teamNames}</div>
+        </div>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="section-minihead">CONTACTO Y REDES</div>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        ${coach.rlTracker ? `<a href="${coach.rlTracker}" target="_blank" class="btn btn-sm" style="color:var(--accent); border-color:var(--accent)">RL Tracker ↗</a>` : ''}
+        
+        ${coach.discordId ? `
+          <button class="btn btn-sm" id="copyCoachDiscordBtn" data-id="${coach.discordId}" style="cursor:pointer; border-color:rgba(88, 101, 242, 0.4); color:#5865F2; background:rgba(88, 101, 242, 0.1); display:flex; gap:6px; align-items:center;" title="Copiar ID de Discord">
+            <i class="fa-brands fa-discord"></i> ${coach.discordId} <i class="fa-regular fa-copy" style="margin-left:4px; opacity:0.7;"></i>
+          </button>
+        ` : ''}
+
+        ${socialsList.map(s => `
+          <a href="${s.url}" target="_blank" class="btn btn-sm"><i class="${s.icon}"></i> ${s.label}</a>
+        `).join('')}
+      </div>
+    `,
+    footer: `<button class="btn btn-ghost" data-close>CERRAR</button>`,
+    onMount: (root) => {
+      root.querySelector('#copyCoachDiscordBtn')?.addEventListener('click', (e) => {
+        const discordId = e.currentTarget.dataset.id;
+        if (!discordId) return;
+        navigator.clipboard.writeText(discordId).then(() => {
+          toast('✅ ID de Discord copiado', 'success');
+        }).catch(err => {
+          console.error('Error al copiar:', err);
+          toast('No se pudo copiar el ID', 'error');
+        });
+      });
+    }
+  });
+}

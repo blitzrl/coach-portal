@@ -37,7 +37,15 @@
         <input class="input" type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
       </div>
 
-      <button class="btn btn-primary" id="btnLogin" style="width: 100%; margin-top: 10px; padding: 12px;">
+      <!-- 🔥 SPRINT 3: Checkbox Conservar Sesión -->
+      <div class="field" style="text-align: left; margin-top: 4px; margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 12px; color: var(--silver); text-transform: none; letter-spacing: 0;">
+          <input type="checkbox" id="rememberSession" style="width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer;">
+          Conservar inicio de sesión
+        </label>
+      </div>
+
+      <button class="btn btn-primary" id="btnLogin" style="width: 100%; padding: 12px;">
         INICIAR SESIÓN
       </button>
       
@@ -52,11 +60,12 @@
   
   <!-- Lógica del Login (Módulo) -->
   <script type="module">
-    import { CoachAuth } from './js/auth.js';
+    import { CoachAuth } from './js/auth.js?v=65';
 
     document.getElementById('btnLogin').addEventListener('click', async () => {
       const user = document.getElementById('loginUser').value.trim();
       const pass = document.getElementById('loginPass').value;
+      const remember = document.getElementById('rememberSession').checked;
       const errDiv = document.getElementById('loginError');
       const btn = document.getElementById('btnLogin');
 
@@ -71,6 +80,9 @@
       errDiv.style.display = 'none';
 
       try {
+        // 🔥 SPRINT 3: Guardar preferencia ANTES del login
+        localStorage.setItem('zenith_remember_team', remember ? 'true' : 'false');
+
         // Llamada a la función de login en auth.js
         const res = await CoachAuth.login(user, pass);
         

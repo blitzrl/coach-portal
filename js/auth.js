@@ -28,6 +28,11 @@ export const CoachAuth = {
       return { ok: false, error: error?.message || data?.error || 'Sesión expirada' };
     }
 
+    // 🔥 FIX: Recuperar el nombre del coach del sessionStorage por si el RPC no lo devuelve
+    const savedData = sessionStorage.getItem('zenith_coach_data');
+    const coachData = savedData ? JSON.parse(savedData) : {};
+    const coachName = data.name || coachData.name || 'Coach';
+
     // 🔥 FIX: Asegurar que teamIds siempre sea un arreglo válido
     let teamIds = [];
     if (Array.isArray(data.teamIds)) {
@@ -40,7 +45,7 @@ export const CoachAuth = {
 
     const orgName = data.orgName || '';
     
-    return { ...data, teamIds, orgName };
+    return { ...data, name: coachName, teamIds, orgName };
   },
 
   async logout() {

@@ -26,29 +26,37 @@
   </div>
 
   <div class="coach-shell" id="appShell" style="display:none;">
+    
+    <!-- 🔥 FIX TOPBAR: Rediseño con Flexbox -->
     <header class="coach-header">
-      <div style="display:flex; align-items:center; gap:12px;">
+      
+      <!-- Izquierda: Logo -->
+      <div style="display:flex; align-items:center; flex-shrink:0;">
         <div style="font-family:var(--font-display); font-size:20px; letter-spacing:.2em; color:var(--silver-light);">ZENITH</div>
       </div>
       
-      <div style="display:flex; align-items:center; gap:16px;">
+      <!-- Derecha: Info, Botón, Coach y Salir -->
+      <div style="display:flex; align-items:center; gap:16px; min-width:0;">
         
-        <!-- 🔥 FIX: Info del Equipo a la derecha -->
-        <div style="display:flex; flex-direction:column; align-items:flex-end;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent);">Mi Equipo</div>
-            <!-- 🔥 FIX: Botón Cambiar Equipo a la derecha -->
-            <button id="btnChangeTeam" class="btn btn-sm" style="display:none; border-color:var(--accent); color:var(--accent); padding: 2px 8px; font-size: 10px; height: 20px;">
-              <span id="btnChangeTeamIcon">🔄</span> <span id="btnChangeTeamLabel">Cambiar Equipo</span>
+        <!-- Info del Equipo y Grupo -->
+        <div style="display:flex; flex-direction:column; align-items:flex-end; min-width:0; max-width:180px;">
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+            <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Mi Equipo</div>
+            <!-- Botón Cambiar Equipo -->
+            <button id="btnChangeTeam" class="btn btn-sm" style="display:none; border-color:var(--accent); color:var(--accent); padding: 2px 8px; font-size: 10px; height: 20px; flex-shrink:0;">
+              <span id="btnChangeTeamIcon">🔄</span> <span id="btnChangeTeamLabel" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">Cambiar</span>
             </button>
           </div>
-          <div id="headerOrgName" style="font-size:10px; color:var(--gold); display:none; margin-top: 2px;"></div>
+          <div id="headerOrgName" style="font-size:10px; color:var(--gold); display:none; margin-top: 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;"></div>
         </div>
 
-        <div style="width:1px; height:24px; background:var(--border);"></div>
+        <div style="width:1px; height:24px; background:var(--border); flex-shrink:0;"></div>
 
-        <div id="headerCoachName" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline;" title="Ver mi perfil">Coach</div>
-        <button class="btn btn-sm btn-ghost" id="btnLogout" style="border-color:var(--danger); color:var(--danger);">SALIR</button>
+        <!-- Nombre del Coach -->
+        <div id="headerCoachName" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; flex-shrink:0;" title="Ver mi perfil">Coach</div>
+        
+        <!-- Botón Salir -->
+        <button class="btn btn-sm btn-ghost" id="btnLogout" style="border-color:var(--danger); color:var(--danger); flex-shrink:0;">SALIR</button>
       </div>
     </header>
 

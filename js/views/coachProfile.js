@@ -6,6 +6,8 @@ export function showCoachSelfProfile(coach, DB) {
 
   const teamNames = (coach.teamIds || []).map(id => DB.teams.find(t => t.id === id)?.name).filter(Boolean).join(', ') || 'Agente Libre';
   const flag = coach.nationalityCode ? getNationFlag(coach.nationalityCode) : '';
+  // 🔥 SPRINT 2: Detectar si tiene grupo activo
+  const hasGroup = coach.orgName && (coach.teamIds || []).length > 1;
 
   const socialsList = [];
   if (coach.socials?.twitter) socialsList.push({ icon: 'fa-brands fa-twitter', url: coach.socials.twitter, label: 'Twitter' });
@@ -17,15 +19,28 @@ export function showCoachSelfProfile(coach, DB) {
     id: 'coach-self-profile',
     title: 'MI PERFIL DE COACH',
     body: `
-      <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px">
+      <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
         <div class="team-logo-box-xl" style="border-radius:50%">
           ${coach.profilePicture ? `<img src="${coach.profilePicture}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : '👤'}
         </div>
-        <div>
-          <h2 style="font-family:var(--font-display); font-size:24px; color:var(--silver-light); margin:0;">${coach.name} ${flag}</h2>
+        <div style="min-width:0; flex:1;">
+          <h2 style="font-family:var(--font-display); font-size:24px; color:var(--silver-light); margin:0; word-break:break-word;">${esc(coach.name)} ${flag}</h2>
           <div style="color:var(--accent); font-weight:600; margin-top:4px">${coach.roleType === 'coach' ? 'Head Coach' : 'Asistente'}</div>
-          <div style="color:var(--muted); font-size:12px; margin-top:4px">${teamNames}</div>
+          ${hasGroup ? `<div style="color:var(--gold); font-size:13px; margin-top:6px; font-weight:600; word-break:break-word;">👥 ${esc(coach.orgName)}</div>` : ''}
+          <div style="color:var(--muted); font-size:12px; margin-top:4px; word-break:break-word;">${teamNames}</div>
         </div>
+      </div>
+      
+      <div class="divider"></div>
+
+      <!-- 🔥 SPRINT 2: Lista visual de equipos -->
+      <div class="section-minihead">MIS EQUIPOS (${(coach.teamIds || []).length})</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+        ${(coach.teamIds || []).map(id => {
+          const t = DB.teams.find(x => x.id === id);
+          if (!t) return '';
+          return `<div class="chip chip-accent" style="font-size:11px; padding:4px 10px;">${esc(t.name)}</div>`;
+        }).join('') || '<div style="color:var(--muted); font-size:12px;">Sin equipos asignados</div>'}
       </div>
       
       <div class="divider"></div>
@@ -36,8 +51,8 @@ export function showCoachSelfProfile(coach, DB) {
         ${coach.rlTracker ? `<a href="${coach.rlTracker}" target="_blank" class="btn btn-sm" style="color:var(--accent); border-color:var(--accent)">RL Tracker ↗</a>` : ''}
         
         ${coach.discordId ? `
-          <button class="btn btn-sm" id="copyCoachDiscordBtn" data-id="${coach.discordId}" style="cursor:pointer; border-color:rgba(88, 101, 242, 0.4); color:#5865F2; background:rgba(88, 101, 242, 0.1); display:flex; gap:6px; align-items:center;" title="Copiar ID de Discord">
-            <i class="fa-brands fa-discord"></i> ${coach.discordId} <i class="fa-regular fa-copy" style="margin-left:4px; opacity:0.7;"></i>
+          <button class="btn btn-sm" id="copyCoachDiscordBtn" data-id="${coach.discordId}" style="cursor:pointer; border-color:rgba(88, 101, 242, 0.4); color:#5865F2; background:rgba(88, 101, 242, 0.1); display:flex; gap:6px; align-items:center; max-width:100%;" title="Copiar ID de Discord">
+            <i class="fa-brands fa-discord"></i> <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(coach.discordId)}</span> <i class="fa-regular fa-copy" style="margin-left:4px; opacity:0.7;"></i>
           </button>
         ` : ''}
 
@@ -60,4 +75,8 @@ export function showCoachSelfProfile(coach, DB) {
       });
     }
   });
+}
+
+function esc(str){
+  return String(str ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }

@@ -15,7 +15,6 @@ window.refreshPortalView = () => {
   if (_currentView) renderView(_currentView);
 };
 
-// 🔥 SPRINT 3: Función auxiliar para guardar el equipo según preferencia
 function persistActiveTeam(teamId, remember) {
   if (remember) {
     localStorage.setItem('zenith_active_team', teamId);
@@ -36,19 +35,29 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     currentSession = session;
 
-    // 🔥 SPRINT 3: Leer preferencia de "Conservar Sesión"
+    // 1. Cargar DB primero para tener los datos reales del coach
+    DB = await loadPortalDB();
+
+    // 🔥 FIX: Fallback de seguridad. Si el RPC no devolvió los teamIds, los leemos de la DB.
+    const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
+    if (dbCoach) {
+      if (!currentSession.teamIds || currentSession.teamIds.length === 0) {
+        currentSession.teamIds = dbCoach.teamIds || [];
+      }
+      if (!currentSession.orgName) {
+        currentSession.orgName = dbCoach.orgName || '';
+      }
+    }
+
     const remember = localStorage.getItem('zenith_remember_team') === 'true';
     const savedTeamId = remember 
       ? localStorage.getItem('zenith_active_team') 
       : sessionStorage.getItem('zenith_active_team');
     
-    const hasMultipleTeams = session.teamIds && session.teamIds.length > 1;
-    const isValidSaved = savedTeamId && session.teamIds.includes(savedTeamId);
+    // 2. Ahora es imposible que falle, los teamIds están garantizados
+    const hasMultipleTeams = currentSession.teamIds.length > 1;
+    const isValidSaved = savedTeamId && currentSession.teamIds.includes(savedTeamId);
 
-    // Cargar DB primero (necesitamos nombres de equipos para el modal)
-    DB = await loadPortalDB();
-
-    // Limpieza de solicitudes (comportamiento original)
     try {
       const sb = getSupabase();
       await sb.from('coach_requests').update({ status: 'completed' }).in('status', ['approved_by_admin', 'accepted_by_target']);
@@ -57,10 +66,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'flex';
 
-    // Configurar eventos de cabecera siempre
     setupHeaderEvents();
 
-    // 🔥 SPRINT 3: Lógica de selección
+    // 3. Si hay múltiples equipos y no hay uno guardado, abrir modal
     if (hasMultipleTeams && !isValidSaved) {
       currentSession.activeTeamId = null;
       showTeamSelectionModal(() => {
@@ -69,11 +77,11 @@ window.addEventListener('DOMContentLoaded', async () => {
         subscribeRealtime();
         startSessionCheck();
       });
-      return; // Detenemos el arranque del router hasta que elija
+      return; 
     }
 
-    // Un solo equipo o ya hay uno guardado
-    currentSession.activeTeamId = isValidSaved ? savedTeamId : (session.teamIds[0] || null);
+    // 4. Si hay 1 equipo o ya hay uno guardado, entrar directo
+    currentSession.activeTeamId = isValidSaved ? savedTeamId : (currentSession.teamIds[0] || null);
     if (currentSession.activeTeamId) {
       persistActiveTeam(currentSession.activeTeamId, remember);
     }
@@ -89,19 +97,14 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// 🔥 SPRINT 3: Modal de Selección
 function showTeamSelectionModal(onSelect) {
   const modal = document.getElementById('teamSelectionModal');
   const list = document.getElementById('teamSelectionList');
   const subtitleEl = document.getElementById('teamSelectionSubtitle');
   const remember = localStorage.getItem('zenith_remember_team') === 'true';
 
-  // Buscar orgName real en DB (por si el SQL no lo devolvió)
-  const coachData = DB.coaches.find(c => c.id === currentSession.coachId);
-  const orgName = currentSession.orgName || coachData?.orgName;
-
-  if (orgName && currentSession.teamIds.length > 1) {
-    subtitleEl.innerHTML = `<strong style="color:var(--gold)">👥 ${esc(orgName)}</strong><br>Tienes acceso a ${currentSession.teamIds.length} equipos. Elige con cuál deseas trabajar.`;
+  if (currentSession.orgName && currentSession.teamIds.length > 1) {
+    subtitleEl.innerHTML = `<strong style="color:var(--gold)">👥 ${esc(currentSession.orgName)}</strong><br>Tienes acceso a ${currentSession.teamIds.length} equipos. Elige con cuál deseas trabajar.`;
   }
 
   list.innerHTML = currentSession.teamIds.map(teamId => {
@@ -143,12 +146,11 @@ function updateHeader() {
   const teamNameEl = document.getElementById('headerTeamName');
   if (teamNameEl) teamNameEl.textContent = team ? team.name : 'Selecciona un equipo';
 
-  // Nombre del grupo (buscamos orgName real en DB si no vino del SQL)
-  const orgName = currentSession.orgName || coach?.orgName;
+  // Nombre del grupo
   const orgNameEl = document.getElementById('headerOrgName');
   if (orgNameEl) {
-    if (orgName && hasMultiple) {
-      orgNameEl.textContent = `👥 ${orgName}`;
+    if (currentSession.orgName && hasMultiple) {
+      orgNameEl.textContent = `👥 ${currentSession.orgName}`;
       orgNameEl.style.display = 'block';
     } else {
       orgNameEl.style.display = 'none';
@@ -165,7 +167,7 @@ function updateHeader() {
   if (btnChange) {
     btnChange.style.display = hasMultiple ? 'inline-flex' : 'none';
     const label = document.getElementById('btnChangeTeamLabel');
-    if (label) label.textContent = orgName || 'Cambiar';
+    if (label) label.textContent = currentSession.orgName || 'Cambiar';
   }
 }
 
@@ -174,7 +176,7 @@ function setupHeaderEvents() {
     if (currentSession.teamIds && currentSession.teamIds.length > 1) {
       showTeamSelectionModal(() => {
         updateHeader();
-        renderView(_currentView); // Recargar la vista actual con el nuevo equipo
+        renderView(_currentView); 
       });
     }
   });

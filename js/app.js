@@ -25,6 +25,19 @@ function persistActiveTeam(teamId, remember) {
   }
 }
 
+// 🔥 FIX MAESTRO: Buscar equipos directamente en la tabla de equipos
+function getMyTeams(coachName, fallbackTeamIds) {
+  // 1. Buscar por nombre en los equipos
+  let myTeams = DB.teams.filter(t => t.coach === coachName || t.assistant === coachName);
+  
+  // 2. Si no encuentra nada (por ejemplo, el nombre cambió), usar el teamIds del RPC
+  if (myTeams.length === 0 && fallbackTeamIds && fallbackTeamIds.length > 0) {
+    myTeams = DB.teams.filter(t => fallbackTeamIds.includes(t.id));
+  }
+
+  return myTeams;
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const session = await CoachAuth.validateSession();
@@ -35,17 +48,21 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     currentSession = session;
 
-    // 1. Cargar DB primero para tener los datos reales del coach
+    // Cargar DB
     DB = await loadPortalDB();
 
-    // 🔥 FIX: Fallback de seguridad. Si el RPC no devolvió los teamIds, los leemos de la DB.
-    const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
-    if (dbCoach) {
-      if (!currentSession.teamIds || currentSession.teamIds.length === 0) {
-        currentSession.teamIds = dbCoach.teamIds || [];
-      }
-      if (!currentSession.orgName) {
-        currentSession.orgName = dbCoach.orgName || '';
+    // 🔥 FIX: Obtener equipos reales escaneando la DB por el nombre del coach
+    const myTeams = getMyTeams(currentSession.name, currentSession.teamIds);
+    const myTeamIds = myTeams.map(t => t.id);
+
+    // Actualizamos la sesión con los datos reales encontrados en la DB
+    currentSession.teamIds = myTeamIds;
+    
+    // Si el RPC no trajo el orgName, lo buscamos en la tabla de coaches
+    if (!currentSession.orgName) {
+      const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
+      if (dbCoach && dbCoach.orgName) {
+        currentSession.orgName = dbCoach.orgName;
       }
     }
 
@@ -54,7 +71,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       ? localStorage.getItem('zenith_active_team') 
       : sessionStorage.getItem('zenith_active_team');
     
-    // 2. Ahora es imposible que falle, los teamIds están garantizados
+    // Ahora es imposible que falle
     const hasMultipleTeams = currentSession.teamIds.length > 1;
     const isValidSaved = savedTeamId && currentSession.teamIds.includes(savedTeamId);
 
@@ -68,7 +85,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setupHeaderEvents();
 
-    // 3. Si hay múltiples equipos y no hay uno guardado, abrir modal
     if (hasMultipleTeams && !isValidSaved) {
       currentSession.activeTeamId = null;
       showTeamSelectionModal(() => {
@@ -80,7 +96,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       return; 
     }
 
-    // 4. Si hay 1 equipo o ya hay uno guardado, entrar directo
     currentSession.activeTeamId = isValidSaved ? savedTeamId : (currentSession.teamIds[0] || null);
     if (currentSession.activeTeamId) {
       persistActiveTeam(currentSession.activeTeamId, remember);
@@ -105,6 +120,8 @@ function showTeamSelectionModal(onSelect) {
 
   if (currentSession.orgName && currentSession.teamIds.length > 1) {
     subtitleEl.innerHTML = `<strong style="color:var(--gold)">👥 ${esc(currentSession.orgName)}</strong><br>Tienes acceso a ${currentSession.teamIds.length} equipos. Elige con cuál deseas trabajar.`;
+  } else {
+    subtitleEl.innerHTML = `Tienes acceso a ${currentSession.teamIds.length} equipos. Elige con cuál deseas trabajar.`;
   }
 
   list.innerHTML = currentSession.teamIds.map(teamId => {
@@ -142,11 +159,9 @@ function updateHeader() {
   const coach = DB.coaches.find(c => c.id === currentSession.coachId);
   const hasMultiple = currentSession.teamIds && currentSession.teamIds.length > 1;
 
-  // Nombre del equipo
   const teamNameEl = document.getElementById('headerTeamName');
   if (teamNameEl) teamNameEl.textContent = team ? team.name : 'Selecciona un equipo';
 
-  // Nombre del grupo
   const orgNameEl = document.getElementById('headerOrgName');
   if (orgNameEl) {
     if (currentSession.orgName && hasMultiple) {
@@ -157,12 +172,10 @@ function updateHeader() {
     }
   }
 
-  // Nombre del coach
   if (document.getElementById('headerCoachName')) {
-    document.getElementById('headerCoachName').textContent = coach ? coach.name : 'Coach';
+    document.getElementById('headerCoachName').textContent = coach ? coach.name : currentSession.name;
   }
 
-  // Botón "Cambiar Equipo"
   const btnChange = document.getElementById('btnChangeTeam');
   if (btnChange) {
     btnChange.style.display = hasMultiple ? 'inline-flex' : 'none';

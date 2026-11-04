@@ -11,6 +11,10 @@ export function renderAlignmentView(DB, session) {
 
   _tempRoster = (team.roster || []).map(r => ({ ...r }));
 
+  // 🔥 FIX: Leer la configuración real del Gestor
+  const limits = DB.config.rosterRules || { starters: 3, substitutes: 1, max: 4 };
+  const maxAux = Math.max(0, limits.max - limits.starters - limits.substitutes);
+
   const players = _tempRoster.map(r => {
     const p = DB.players.find(x => x.id === r.playerId) || {};
     return { ...p, role: r.role };
@@ -27,7 +31,7 @@ export function renderAlignmentView(DB, session) {
     <div class="grid grid-3" id="lineupZones">
       <div class="card" data-dropzone="TITULAR">
         <div class="card-header" style="border-bottom:2px solid var(--success)">
-          <div class="card-title" style="color:var(--success)">TITULARES (${titulares.length}/3)</div>
+          <div class="card-title" style="color:var(--success)">TITULARES (${titulares.length}/${limits.starters})</div>
         </div>
         <div class="lineup-list" id="list-TITULAR">
           ${titulares.map(p => renderPlayerCard(p, DB, session)).join('')}
@@ -36,7 +40,7 @@ export function renderAlignmentView(DB, session) {
 
       <div class="card" data-dropzone="SUPLENTE">
         <div class="card-header" style="border-bottom:2px solid var(--gold)">
-          <div class="card-title" style="color:var(--gold)">SUPLENTES (${suplentes.length}/1)</div>
+          <div class="card-title" style="color:var(--gold)">SUPLENTES (${suplentes.length}/${limits.substitutes})</div>
         </div>
         <div class="lineup-list" id="list-SUPLENTE">
           ${suplentes.map(p => renderPlayerCard(p, DB, session)).join('')}
@@ -45,7 +49,7 @@ export function renderAlignmentView(DB, session) {
 
       <div class="card" data-dropzone="AUXILIAR">
         <div class="card-header" style="border-bottom:2px solid var(--accent)">
-          <div class="card-title" style="color:var(--accent)">AUXILIARES</div>
+          <div class="card-title" style="color:var(--accent)">AUXILIARES (${auxiliares.length}/${maxAux})</div>
         </div>
         <div class="lineup-list" id="list-AUXILIAR">
           ${auxiliares.map(p => renderPlayerCard(p, DB, session)).join('')}
@@ -91,10 +95,11 @@ export function bindAlignmentEvents(DB, session) {
   const btnSave = document.getElementById('btnSaveLineup');
   let hasChanges = false;
 
-  // Función para refrescar los botones de "FIRMAR" cuando se mueve una tarjeta
+  // Leer los límites aquí también para usarlos en la validación del Drop
+  const limits = DB.config.rosterRules || { starters: 3, substitutes: 1, max: 4 };
+
   function bindFirmarButtons() {
     document.querySelectorAll('[data-firmar-contrato]').forEach(btn => {
-      // Evitar duplicar listeners usando un clon del nodo
       const newBtn = btn.cloneNode(true);
       btn.parentNode.replaceChild(newBtn, btn);
       newBtn.addEventListener('click', (e) => {
@@ -147,6 +152,26 @@ export function bindAlignmentEvents(DB, session) {
       const playerIndex = _tempRoster.findIndex(r => r.playerId === playerId);
       if (playerIndex === -1) return;
 
+      const currentRole = _tempRoster[playerIndex].role;
+      if (currentRole === newRole) return; // Si ya está ahí, no hacer nada
+
+      // 🔥 FIX MAESTRO: Validar límites antes de permitir el Drop
+      const currentTitulares = _tempRoster.filter(r => r.role === 'TITULAR' || r.role === 'CAPITÁN');
+      const currentSuplentes = _tempRoster.filter(r => r.role === 'SUPLENTE');
+      const currentAuxiliares = _tempRoster.filter(r => r.role === 'AUXILIAR');
+      const maxAux = Math.max(0, limits.max - limits.starters - limits.substitutes);
+
+      if (newRole === 'TITULAR' && currentTitulares.length >= limits.starters) {
+        return toast(`Límite de titulares alcanzado (${limits.starters})`, 'error');
+      }
+      if (newRole === 'SUPLENTE' && currentSuplentes.length >= limits.substitutes) {
+        return toast(`Límite de suplentes alcanzado (${limits.substitutes})`, 'error');
+      }
+      if (newRole === 'AUXILIAR' && currentAuxiliares.length >= maxAux) {
+        return toast(`Límite de auxiliares alcanzado (${maxAux})`, 'error');
+      }
+
+      // Si pasa la validación, actualizamos
       _tempRoster[playerIndex].role = newRole;
       hasChanges = true;
       checkChanges();
@@ -159,7 +184,6 @@ export function bindAlignmentEvents(DB, session) {
       document.getElementById('list-SUPLENTE').innerHTML = suplentes.map(r => renderPlayerCard(DB.players.find(p => p.id === r.playerId) || {name:'?'}, DB, session)).join('');
       document.getElementById('list-AUXILIAR').innerHTML = auxiliares.map(r => renderPlayerCard(DB.players.find(p => p.id === r.playerId) || {name:'?'}, DB, session)).join('');
       
-      // Re-vincular los botones de firmar tras el re-render
       bindFirmarButtons();
     });
   });
@@ -169,8 +193,13 @@ export function bindAlignmentEvents(DB, session) {
       btnSave.disabled = true;
       btnSave.textContent = 'GUARDANDO...';
       
-      // 🔥 FIX CRÍTICO: Usar la función updateLineup que inyecta el token automáticamente
       await updateLineup(session.token, session.activeTeamId, _tempRoster);
+      
+      // 🔥 FIX EXTRA: Actualizar la DB local para evitar que el Realtime "pise" la vista antes de que Supabase se actualice
+      const team = DB.teams.find(t => t.id === session.activeTeamId);
+      if (team) {
+        team.roster = JSON.parse(JSON.stringify(_tempRoster));
+      }
       
       toast('✅ Alineación guardada correctamente', 'success');
       btnSave.textContent = 'GUARDADO';

@@ -1,7 +1,7 @@
-import { toast } from '../services/ui.js?v=64';
-import { loadPortalDB, getSupabase } from '../services/supabase.js?v=64';
-import { openSigningWizard } from './signingWizard.js?v=64';
-import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=64';
+import { toast } from '../services/ui.js?v=65';
+import { updateLineup, loadPortalDB } from '../services/supabase.js?v=65';
+import { openSigningWizard } from './signingWizard.js?v=65';
+import { getNationFlag, getRankColor, getRankLabelResponsive } from '../data/nations.js?v=65';
 
 let _tempRoster = []; 
 
@@ -91,12 +91,20 @@ export function bindAlignmentEvents(DB, session) {
   const btnSave = document.getElementById('btnSaveLineup');
   let hasChanges = false;
 
-  document.querySelectorAll('[data-firmar-contrato]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openSigningWizard(DB, session, btn.dataset.firmarContrato, false);
+  // Función para refrescar los botones de "FIRMAR" cuando se mueve una tarjeta
+  function bindFirmarButtons() {
+    document.querySelectorAll('[data-firmar-contrato]').forEach(btn => {
+      // Evitar duplicar listeners usando un clon del nodo
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openSigningWizard(DB, session, newBtn.dataset.firmarContrato, false);
+      });
     });
-  });
+  }
+
+  bindFirmarButtons();
 
   function checkChanges() {
     if (hasChanges) {
@@ -151,12 +159,8 @@ export function bindAlignmentEvents(DB, session) {
       document.getElementById('list-SUPLENTE').innerHTML = suplentes.map(r => renderPlayerCard(DB.players.find(p => p.id === r.playerId) || {name:'?'}, DB, session)).join('');
       document.getElementById('list-AUXILIAR').innerHTML = auxiliares.map(r => renderPlayerCard(DB.players.find(p => p.id === r.playerId) || {name:'?'}, DB, session)).join('');
       
-      document.querySelectorAll('[data-firmar-contrato]').forEach(btn => {
-        btn.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          openSigningWizard(DB, session, btn.dataset.firmarContrato, false);
-        });
-      });
+      // Re-vincular los botones de firmar tras el re-render
+      bindFirmarButtons();
     });
   });
 
@@ -165,13 +169,8 @@ export function bindAlignmentEvents(DB, session) {
       btnSave.disabled = true;
       btnSave.textContent = 'GUARDANDO...';
       
-      const { data, error } = await getSupabase().rpc('coach_update_lineup', {
-        p_team_id: session.activeTeamId,
-        p_roster: _tempRoster
-      });
-      
-      if (error) throw new Error(error.message);
-      if (!data.ok) throw new Error(data.error);
+      // 🔥 FIX CRÍTICO: Usar la función updateLineup que inyecta el token automáticamente
+      await updateLineup(session.token, session.activeTeamId, _tempRoster);
       
       toast('✅ Alineación guardada correctamente', 'success');
       btnSave.textContent = 'GUARDADO';

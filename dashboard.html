@@ -31,9 +31,16 @@
         <div style="font-family:var(--font-display); font-size:20px; letter-spacing:.2em; color:var(--silver-light);">ZENITH</div>
         <div style="width:1px; height:20px; background:var(--border);"></div>
         
-        <!-- 🔥 SELECTOR DE EQUIPO -->
-        <select id="teamSelector" class="select" style="display:none; max-width:160px; padding:4px 8px; font-size:12px; height:auto; background:var(--bg-elev); border:1px solid var(--border);"></select>
-        <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent);">Mi Equipo</div>
+        <div style="display:flex; flex-direction:column;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent);">Mi Equipo</div>
+            <!-- 🔥 SPRINT 3: Botón Cambiar Equipo -->
+            <button id="btnChangeTeam" class="btn btn-sm" style="display:none; border-color:var(--accent); color:var(--accent); padding: 2px 8px; font-size: 10px; height: 20px;">
+              <span id="btnChangeTeamIcon">🔄</span> <span id="btnChangeTeamLabel">Cambiar Equipo</span>
+            </button>
+          </div>
+          <div id="headerOrgName" style="font-size:10px; color:var(--gold); display:none; margin-top: 2px;"></div>
+        </div>
       </div>
       <div style="display:flex; align-items:center; gap:16px;">
         <div id="headerCoachName" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline;" title="Ver mi perfil">Coach</div>
@@ -54,10 +61,25 @@
     <main class="coach-content" id="viewContent"></main>
   </div>
 
+  <!-- 🔥 SPRINT 3: Modal de Selección de Equipo -->
+  <div id="teamSelectionModal" class="modal-back" style="display:none; z-index:999">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-head">
+        <h3 id="teamSelectionTitle">SELECCIONA TU EQUIPO</h3>
+      </div>
+      <div class="modal-body">
+        <p id="teamSelectionSubtitle" style="font-size:13px; color:var(--muted); margin-bottom:16px;">
+          Tienes acceso a múltiples equipos. Elige con cuál deseas trabajar en esta sesión.
+        </p>
+        <div id="teamSelectionList" style="display:flex; flex-direction:column; gap:10px;"></div>
+      </div>
+    </div>
+  </div>
+
   <div id="modalRoot"></div>
   <div class="toast-root" id="toastRoot"></div>
 
   <script src="config.js"></script>
-  <script type="module" src="js/app.js?v=62"></script>
+  <script type="module" src="js/app.js?v=65"></script>
 </body>
 </html>

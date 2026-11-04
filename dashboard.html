@@ -29,20 +29,24 @@
     <header class="coach-header">
       <div style="display:flex; align-items:center; gap:12px;">
         <div style="font-family:var(--font-display); font-size:20px; letter-spacing:.2em; color:var(--silver-light);">ZENITH</div>
-        <div style="width:1px; height:20px; background:var(--border);"></div>
+      </div>
+      
+      <div style="display:flex; align-items:center; gap:16px;">
         
-        <div style="display:flex; flex-direction:column;">
+        <!-- 🔥 FIX: Info del Equipo a la derecha -->
+        <div style="display:flex; flex-direction:column; align-items:flex-end;">
           <div style="display:flex; align-items:center; gap:8px;">
             <div id="headerTeamName" style="font-size:13px; font-weight:600; color:var(--accent);">Mi Equipo</div>
-            <!-- 🔥 SPRINT 3: Botón Cambiar Equipo -->
+            <!-- 🔥 FIX: Botón Cambiar Equipo a la derecha -->
             <button id="btnChangeTeam" class="btn btn-sm" style="display:none; border-color:var(--accent); color:var(--accent); padding: 2px 8px; font-size: 10px; height: 20px;">
               <span id="btnChangeTeamIcon">🔄</span> <span id="btnChangeTeamLabel">Cambiar Equipo</span>
             </button>
           </div>
           <div id="headerOrgName" style="font-size:10px; color:var(--gold); display:none; margin-top: 2px;"></div>
         </div>
-      </div>
-      <div style="display:flex; align-items:center; gap:16px;">
+
+        <div style="width:1px; height:24px; background:var(--border);"></div>
+
         <div id="headerCoachName" style="font-size:12px; color:var(--muted); cursor:pointer; text-decoration:underline;" title="Ver mi perfil">Coach</div>
         <button class="btn btn-sm btn-ghost" id="btnLogout" style="border-color:var(--danger); color:var(--danger);">SALIR</button>
       </div>
@@ -61,7 +65,7 @@
     <main class="coach-content" id="viewContent"></main>
   </div>
 
-  <!-- 🔥 SPRINT 3: Modal de Selección de Equipo -->
+  <!-- Modal de Selección de Equipo -->
   <div id="teamSelectionModal" class="modal-back" style="display:none; z-index:999">
     <div class="modal" style="max-width:480px">
       <div class="modal-head">

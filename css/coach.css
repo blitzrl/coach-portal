@@ -51,6 +51,7 @@
   min-height: 100vh;
 }
 
+/* 🔥 FIX TOPBAR: Flexbox robusto para evitar desbordes */
 .coach-header {
   display: flex;
   align-items: center;
@@ -74,7 +75,10 @@
   position: sticky;
   top: 64px;
   z-index: 90;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Ocultar scroll en Firefox */
 }
+.coach-nav::-webkit-scrollbar { display: none; } /* Ocultar scroll en Chrome/Safari */
 
 .stats-tabs {
   position: sticky;
@@ -112,11 +116,9 @@
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  /* 🔥 FIX SCROLL: Forzamos una altura mínima para que siempre haya scroll */
   min-height: calc(100vh - 150px); 
 }
 
-/* 🔥 FIX TRUNCATE: Corta los nombres largos con puntos suspensivos */
 .ztable .player-name-cell {
   max-width: 120px;
   white-space: nowrap;
@@ -164,11 +166,21 @@
   box-shadow: 0 0 8px currentColor;
 }
 
+/* 🔥 FIX RESPONSIVE: Cabecera en tablets y móviles */
+@media (max-width: 900px) {
+  .coach-header { padding: 0 16px; }
+  .coach-nav { top: 64px; padding: 12px 16px; gap: 8px; }
+  .stats-tabs { top: 110px; }
+  .coach-content { padding: 16px; }
+}
+
 @media (max-width: 768px) {
-  .coach-header { padding: 0 12px; height: 56px; }
+  .coach-header { 
+    padding: 0 12px; 
+    height: 56px; 
+  }
   .coach-content { padding: 12px; min-height: calc(100vh - 120px); }
-  .coach-nav { padding: 10px 12px; gap: 8px; top: 56px; }
-  .coach-nav-item { padding: 6px 10px; font-size: 11px; }
+  .coach-nav { top: 56px; padding: 10px 12px; }
   .stats-tabs { top: 102px; padding: 6px; margin-bottom: 14px; }
   .stats-tab { padding: 6px 10px; font-size: 11px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
@@ -204,6 +216,6 @@
   h2 { font-size: 20px !important; }
 
   .ztable .player-name-cell {
-    max-width: 80px; /* Más corto en móvil */
+    max-width: 80px;
   }
 }

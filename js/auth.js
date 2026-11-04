@@ -28,7 +28,16 @@ export const CoachAuth = {
       return { ok: false, error: error?.message || data?.error || 'Sesión expirada' };
     }
 
-    const teamIds = data.teamIds || (data.teamId ? [data.teamId] : []);
+    // 🔥 FIX: Asegurar que teamIds siempre sea un arreglo válido
+    let teamIds = [];
+    if (Array.isArray(data.teamIds)) {
+      teamIds = data.teamIds;
+    } else if (data.teamIds) {
+      try { teamIds = JSON.parse(data.teamIds); } catch(e) { teamIds = []; }
+    } else if (data.teamId) {
+      teamIds = [data.teamId];
+    }
+
     const orgName = data.orgName || '';
     
     return { ...data, teamIds, orgName };
@@ -40,7 +49,6 @@ export const CoachAuth = {
       await _client.rpc('coach_logout', { p_token: token });
     }
     
-    // 🔥 SPRINT 3: Respetar preferencia de "Conservar Sesión"
     const remember = localStorage.getItem('zenith_remember_team') === 'true';
     
     sessionStorage.removeItem('zenith_coach_token');
@@ -50,7 +58,6 @@ export const CoachAuth = {
     if (!remember) {
       localStorage.removeItem('zenith_active_team');
     }
-    // Si remember=true, conservamos zenith_active_team en localStorage
     
     window.location.href = 'index.html';
   },

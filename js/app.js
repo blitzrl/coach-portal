@@ -1,10 +1,10 @@
-import { CoachAuth } from './auth.js';
-import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=62'; 
-import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=62';
-import { renderMarketView, bindMarketEvents } from './views/market.js?v=62';
-import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=62';
-import { renderEconomyView } from './views/economy.js?v=62';
-import { showCoachSelfProfile } from './views/coachProfile.js?v=62'; // 🔥 NUEVO
+import { CoachAuth } from './auth.js?v=65';
+import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=65'; 
+import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=65';
+import { renderMarketView, bindMarketEvents } from './views/market.js?v=65';
+import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=65';
+import { renderEconomyView } from './views/economy.js?v=65';
+import { showCoachSelfProfile } from './views/coachProfile.js?v=65';
 
 let DB = null;
 let currentSession = null;
@@ -15,6 +15,17 @@ window.refreshPortalView = () => {
   if (_currentView) renderView(_currentView);
 };
 
+// 🔥 SPRINT 3: Función auxiliar para guardar el equipo según preferencia
+function persistActiveTeam(teamId, remember) {
+  if (remember) {
+    localStorage.setItem('zenith_active_team', teamId);
+    sessionStorage.removeItem('zenith_active_team');
+  } else {
+    sessionStorage.setItem('zenith_active_team', teamId);
+    localStorage.removeItem('zenith_active_team');
+  }
+}
+
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const session = await CoachAuth.validateSession();
@@ -24,20 +35,20 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     currentSession = session;
-    
-    // 🔥 Lógica para seleccionar equipo activo
-    const savedTeamId = localStorage.getItem('zenith_active_team');
-    if (savedTeamId && currentSession.teamIds.includes(savedTeamId)) {
-      currentSession.activeTeamId = savedTeamId;
-    } else {
-      currentSession.activeTeamId = currentSession.teamIds[0] || null;
-      if (currentSession.activeTeamId) {
-        localStorage.setItem('zenith_active_team', currentSession.activeTeamId);
-      }
-    }
 
+    // 🔥 SPRINT 3: Leer preferencia de "Conservar Sesión"
+    const remember = localStorage.getItem('zenith_remember_team') === 'true';
+    const savedTeamId = remember 
+      ? localStorage.getItem('zenith_active_team') 
+      : sessionStorage.getItem('zenith_active_team');
+    
+    const hasMultipleTeams = session.teamIds && session.teamIds.length > 1;
+    const isValidSaved = savedTeamId && session.teamIds.includes(savedTeamId);
+
+    // Cargar DB primero (necesitamos nombres de equipos para el modal)
     DB = await loadPortalDB();
 
+    // Limpieza de solicitudes (comportamiento original)
     try {
       const sb = getSupabase();
       await sb.from('coach_requests').update({ status: 'completed' }).in('status', ['approved_by_admin', 'accepted_by_target']);
@@ -46,86 +57,137 @@ window.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loadingScreen').style.display = 'none';
     document.getElementById('appShell').style.display = 'flex';
 
+    // Configurar eventos de cabecera siempre
+    setupHeaderEvents();
+
+    // 🔥 SPRINT 3: Lógica de selección
+    if (hasMultipleTeams && !isValidSaved) {
+      currentSession.activeTeamId = null;
+      showTeamSelectionModal(() => {
+        updateHeader();
+        initRouter();
+        subscribeRealtime();
+        startSessionCheck();
+      });
+      return; // Detenemos el arranque del router hasta que elija
+    }
+
+    // Un solo equipo o ya hay uno guardado
+    currentSession.activeTeamId = isValidSaved ? savedTeamId : (session.teamIds[0] || null);
+    if (currentSession.activeTeamId) {
+      persistActiveTeam(currentSession.activeTeamId, remember);
+    }
+
     updateHeader();
     initRouter();
+    subscribeRealtime();
+    startSessionCheck();
 
-    // 🔥 Evento del selector de equipo
-    document.getElementById('teamSelector')?.addEventListener('change', (e) => {
-      currentSession.activeTeamId = e.target.value;
-      localStorage.setItem('zenith_active_team', e.target.value);
-      updateHeader();
-      renderView(_currentView);
-    });
-
-    // 🔥 Evento para ver el perfil del coach
-    document.getElementById('headerCoachName')?.addEventListener('click', () => {
-      const coach = DB.coaches.find(c => c.id === currentSession.coachId);
-      if (coach) showCoachSelfProfile(coach, DB);
-    });
-
-    _sessionCheckInterval = setInterval(async () => {
-      const check = await CoachAuth.validateSession();
-      if (!check.ok) {
-        clearInterval(_sessionCheckInterval);
-        alert('Tu sesión ha expirado.');
-        CoachAuth.logout();
-      }
-    }, 30000);
-
-    subscribeToChanges(async () => {
-      try {
-        DB = await loadPortalDB();
-        updateHeader();
-        updateBadge();
-        if (_currentView === 'dashboard') {
-          const content = document.getElementById('viewContent');
-          content.innerHTML = renderDashboardView(DB, currentSession);
-          bindDashboardEvents(DB, currentSession);
-        } else if (_currentView === 'market') {
-          const content = document.getElementById('viewContent');
-          content.innerHTML = renderMarketView(DB, currentSession);
-          bindMarketEvents(DB, currentSession);
-        } else if (_currentView === 'inbox') {
-          const content = document.getElementById('viewContent');
-          content.innerHTML = renderInboxView(DB, currentSession);
-          bindInboxEvents(DB, currentSession);
-        } else if (_currentView === 'economy') {
-          const content = document.getElementById('viewContent');
-          content.innerHTML = renderEconomyView(DB, currentSession);
-        }
-      } catch (e) { console.warn('Error en realtime:', e); }
-    });
-
-    document.getElementById('btnLogout').addEventListener('click', () => {
-      clearInterval(_sessionCheckInterval);
-      CoachAuth.logout();
-    });
-  } catch (err) { alert('Error crítico: ' + err.message); }
+  } catch (err) { 
+    alert('Error crítico: ' + err.message); 
+    console.error(err);
+  }
 });
+
+// 🔥 SPRINT 3: Modal de Selección
+function showTeamSelectionModal(onSelect) {
+  const modal = document.getElementById('teamSelectionModal');
+  const list = document.getElementById('teamSelectionList');
+  const subtitleEl = document.getElementById('teamSelectionSubtitle');
+  const remember = localStorage.getItem('zenith_remember_team') === 'true';
+
+  // Buscar orgName real en DB (por si el SQL no lo devolvió)
+  const coachData = DB.coaches.find(c => c.id === currentSession.coachId);
+  const orgName = currentSession.orgName || coachData?.orgName;
+
+  if (orgName && currentSession.teamIds.length > 1) {
+    subtitleEl.innerHTML = `<strong style="color:var(--gold)">👥 ${esc(orgName)}</strong><br>Tienes acceso a ${currentSession.teamIds.length} equipos. Elige con cuál deseas trabajar.`;
+  }
+
+  list.innerHTML = currentSession.teamIds.map(teamId => {
+    const team = DB.teams.find(t => t.id === teamId);
+    if (!team) return '';
+    const division = team.divisionId ? (DB.divisions.find(d => d.id === team.divisionId)?.name || '') : 'Sin división';
+    return `
+      <button class="btn" data-team-select="${teamId}" style="justify-content:flex-start; gap:12px; padding:12px; text-align:left;">
+        ${team.logo 
+          ? `<img src="${team.logo}" style="width:32px;height:32px;object-fit:contain;border-radius:6px;background:var(--bg-elev);padding:2px;flex-shrink:0;">` 
+          : `<div style="width:32px;height:32px;border-radius:6px;background:var(--bg-elev);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;">◆</div>`}
+        <div style="min-width:0;">
+          <div style="font-weight:600; color:var(--silver-light); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(team.name)}</div>
+          <div style="font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(division)}</div>
+        </div>
+      </button>
+    `;
+  }).join('');
+
+  modal.style.display = 'flex';
+
+  list.querySelectorAll('[data-team-select]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selectedId = btn.dataset.teamSelect;
+      currentSession.activeTeamId = selectedId;
+      persistActiveTeam(selectedId, remember);
+      modal.style.display = 'none';
+      onSelect();
+    });
+  });
+}
 
 function updateHeader() {
   const team = DB.teams.find(t => t.id === currentSession.activeTeamId);
   const coach = DB.coaches.find(c => c.id === currentSession.coachId);
-  
-  if (document.getElementById('headerTeamName')) {
-    document.getElementById('headerTeamName').textContent = team ? team.name : 'Mi Equipo';
+  const hasMultiple = currentSession.teamIds && currentSession.teamIds.length > 1;
+
+  // Nombre del equipo
+  const teamNameEl = document.getElementById('headerTeamName');
+  if (teamNameEl) teamNameEl.textContent = team ? team.name : 'Selecciona un equipo';
+
+  // Nombre del grupo (buscamos orgName real en DB si no vino del SQL)
+  const orgName = currentSession.orgName || coach?.orgName;
+  const orgNameEl = document.getElementById('headerOrgName');
+  if (orgNameEl) {
+    if (orgName && hasMultiple) {
+      orgNameEl.textContent = `👥 ${orgName}`;
+      orgNameEl.style.display = 'block';
+    } else {
+      orgNameEl.style.display = 'none';
+    }
   }
+
+  // Nombre del coach
   if (document.getElementById('headerCoachName')) {
     document.getElementById('headerCoachName').textContent = coach ? coach.name : 'Coach';
   }
 
-  const selector = document.getElementById('teamSelector');
-  if (selector) {
-    if (currentSession.teamIds && currentSession.teamIds.length > 1) {
-      selector.style.display = 'block';
-      selector.innerHTML = currentSession.teamIds.map(id => {
-        const t = DB.teams.find(x => x.id === id);
-        return `<option value="${id}" ${id === currentSession.activeTeamId ? 'selected' : ''}>${t ? t.name : 'Equipo'}</option>`;
-      }).join('');
-    } else {
-      selector.style.display = 'none';
-    }
+  // Botón "Cambiar Equipo"
+  const btnChange = document.getElementById('btnChangeTeam');
+  if (btnChange) {
+    btnChange.style.display = hasMultiple ? 'inline-flex' : 'none';
+    const label = document.getElementById('btnChangeTeamLabel');
+    if (label) label.textContent = orgName || 'Cambiar';
   }
+}
+
+function setupHeaderEvents() {
+  document.getElementById('btnChangeTeam')?.addEventListener('click', () => {
+    if (currentSession.teamIds && currentSession.teamIds.length > 1) {
+      showTeamSelectionModal(() => {
+        updateHeader();
+        renderView(_currentView); // Recargar la vista actual con el nuevo equipo
+      });
+    }
+  });
+
+  document.getElementById('headerCoachName')?.addEventListener('click', () => {
+    const coach = DB.coaches.find(c => c.id === currentSession.coachId);
+    if (coach) showCoachSelfProfile(coach, DB);
+  });
+
+  document.getElementById('btnLogout')?.addEventListener('click', () => {
+    clearInterval(_sessionCheckInterval);
+    CoachAuth.logout();
+  });
 }
 
 function updateBadge() {
@@ -172,5 +234,32 @@ function renderView(viewName) {
     }
   } catch (err) {
     content.innerHTML = `<div class="card" style="border-left:4px solid var(--danger)"><div class="card-title" style="color:var(--danger)">ERROR</div><div>${err.message}</div></div>`;
+    console.error(err);
   }
+}
+
+function subscribeRealtime() {
+  subscribeToChanges(async () => {
+    try {
+      DB = await loadPortalDB();
+      updateHeader();
+      updateBadge();
+      renderView(_currentView);
+    } catch (e) { console.warn('Error en realtime:', e); }
+  });
+}
+
+function startSessionCheck() {
+  _sessionCheckInterval = setInterval(async () => {
+    const check = await CoachAuth.validateSession();
+    if (!check.ok) {
+      clearInterval(_sessionCheckInterval);
+      alert('Tu sesión ha expirado.');
+      CoachAuth.logout();
+    }
+  }, 30000);
+}
+
+function esc(str){
+  return String(str ?? '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
 }

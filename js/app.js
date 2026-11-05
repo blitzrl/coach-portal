@@ -1,10 +1,10 @@
-import { CoachAuth } from './auth.js?v=67';
-import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=67'; 
-import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=67';
-import { renderMarketView, bindMarketEvents } from './views/market.js?v=67';
-import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=67';
-import { renderEconomyView } from './views/economy.js?v=67';
-import { showCoachSelfProfile } from './views/coachProfile.js?v=67';
+import { CoachAuth } from './auth.js?v=68';
+import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=68'; 
+import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=68';
+import { renderMarketView, bindMarketEvents } from './views/market.js?v=68';
+import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=68';
+import { renderEconomyView } from './views/economy.js?v=68';
+import { showCoachSelfProfile } from './views/coachProfile.js?v=68';
 
 let DB = null;
 let currentSession = null;
@@ -25,14 +25,6 @@ function persistActiveTeam(teamId, remember) {
   }
 }
 
-function getMyTeams(coachName, fallbackTeamIds) {
-  let myTeams = DB.teams.filter(t => t.coach === coachName || t.assistant === coachName);
-  if (myTeams.length === 0 && fallbackTeamIds && fallbackTeamIds.length > 0) {
-    myTeams = DB.teams.filter(t => fallbackTeamIds.includes(t.id));
-  }
-  return myTeams;
-}
-
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const session = await CoachAuth.validateSession();
@@ -42,21 +34,25 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     currentSession = session;
-    
-    if (!currentSession.token) {
-      currentSession.token = sessionStorage.getItem('zenith_coach_token');
-    }
 
+    // Cargar DB
     DB = await loadPortalDB();
 
-    // 🔥 FIX: Asegurar que teamIds siempre sea un arreglo
-    if (!Array.isArray(currentSession.teamIds)) {
-      currentSession.teamIds = [];
+    // 🔥 FIX DEFINITIVO: Buscar equipos directamente en la DB usando el nombre del coach
+    let myTeams = DB.teams.filter(t => t.coach === currentSession.name || t.assistant === currentSession.name);
+    
+    // Si no encuentra por nombre (porque lo cambiaron), usamos los IDs que vengan de la sesión
+    if (myTeams.length === 0 && currentSession.teamIds && currentSession.teamIds.length > 0) {
+      myTeams = DB.teams.filter(t => currentSession.teamIds.includes(t.id));
     }
 
-    const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
-    if (dbCoach && currentSession.teamIds.length === 0) {
-      currentSession.teamIds = Array.isArray(dbCoach.teamIds) ? dbCoach.teamIds : [];
+    const myTeamIds = myTeams.map(t => t.id);
+    currentSession.teamIds = myTeamIds; // Sobrescribimos con la verdad absoluta
+
+    // Si el orgName no vino, lo buscamos en la DB
+    if (!currentSession.orgName) {
+      const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
+      if (dbCoach && dbCoach.orgName) currentSession.orgName = dbCoach.orgName;
     }
 
     const remember = localStorage.getItem('zenith_remember_team') === 'true';
@@ -64,8 +60,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       ? localStorage.getItem('zenith_active_team') 
       : sessionStorage.getItem('zenith_active_team');
     
-    const hasMultipleTeams = currentSession.teamIds.length > 1;
-    const isValidSaved = savedTeamId && currentSession.teamIds.includes(savedTeamId);
+    // Verificamos si tiene más de un equipo y si el guardado es válido
+    const hasMultipleTeams = myTeamIds.length > 1;
+    const isValidSaved = savedTeamId && myTeamIds.includes(savedTeamId);
 
     try {
       const sb = getSupabase();
@@ -77,6 +74,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setupHeaderEvents();
 
+    // 🔥 SI TIENE MÚLTIPLES EQUIPOS Y NO HAY UNO VÁLIDO GUARDADO, FORZAMOS EL MODAL
     if (hasMultipleTeams && !isValidSaved) {
       currentSession.activeTeamId = null;
       showTeamSelectionModal(() => {
@@ -88,7 +86,8 @@ window.addEventListener('DOMContentLoaded', async () => {
       return; 
     }
 
-    currentSession.activeTeamId = isValidSaved ? savedTeamId : (currentSession.teamIds[0] || null);
+    // Si tiene 1 equipo o ya hay uno guardado, entra directo
+    currentSession.activeTeamId = isValidSaved ? savedTeamId : (myTeamIds[0] || null);
     if (currentSession.activeTeamId) {
       persistActiveTeam(currentSession.activeTeamId, remember);
     }

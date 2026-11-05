@@ -1,10 +1,10 @@
-import { CoachAuth } from './auth.js?v=66';
-import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=65'; 
-import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=65';
-import { renderMarketView, bindMarketEvents } from './views/market.js?v=65';
-import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=65';
-import { renderEconomyView } from './views/economy.js?v=65';
-import { showCoachSelfProfile } from './views/coachProfile.js?v=65';
+import { CoachAuth } from './auth.js?v=67';
+import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=67'; 
+import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=67';
+import { renderMarketView, bindMarketEvents } from './views/market.js?v=67';
+import { renderInboxView, bindInboxEvents } from './views/inbox.js?v=67';
+import { renderEconomyView } from './views/economy.js?v=67';
+import { showCoachSelfProfile } from './views/coachProfile.js?v=67';
 
 let DB = null;
 let currentSession = null;
@@ -43,21 +43,20 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
     currentSession = session;
     
-    // 🔥 FIX CRÍTICO: Garantizar que el token siempre esté presente en la sesión
     if (!currentSession.token) {
       currentSession.token = sessionStorage.getItem('zenith_coach_token');
     }
 
     DB = await loadPortalDB();
 
+    // 🔥 FIX: Asegurar que teamIds siempre sea un arreglo
+    if (!Array.isArray(currentSession.teamIds)) {
+      currentSession.teamIds = [];
+    }
+
     const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
-    if (dbCoach) {
-      if (!currentSession.teamIds || currentSession.teamIds.length === 0) {
-        currentSession.teamIds = dbCoach.teamIds || [];
-      }
-      if (!currentSession.orgName) {
-        currentSession.orgName = dbCoach.orgName || '';
-      }
+    if (dbCoach && currentSession.teamIds.length === 0) {
+      currentSession.teamIds = Array.isArray(dbCoach.teamIds) ? dbCoach.teamIds : [];
     }
 
     const remember = localStorage.getItem('zenith_remember_team') === 'true';

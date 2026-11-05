@@ -25,16 +25,11 @@ function persistActiveTeam(teamId, remember) {
   }
 }
 
-// 🔥 FIX MAESTRO: Buscar equipos directamente en la tabla de equipos
 function getMyTeams(coachName, fallbackTeamIds) {
-  // 1. Buscar por nombre en los equipos
   let myTeams = DB.teams.filter(t => t.coach === coachName || t.assistant === coachName);
-  
-  // 2. Si no encuentra nada (por ejemplo, el nombre cambió), usar el teamIds del RPC
   if (myTeams.length === 0 && fallbackTeamIds && fallbackTeamIds.length > 0) {
     myTeams = DB.teams.filter(t => fallbackTeamIds.includes(t.id));
   }
-
   return myTeams;
 }
 
@@ -47,22 +42,21 @@ window.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     currentSession = session;
+    
+    // 🔥 FIX CRÍTICO: Garantizar que el token siempre esté presente en la sesión
+    if (!currentSession.token) {
+      currentSession.token = sessionStorage.getItem('zenith_coach_token');
+    }
 
-    // Cargar DB
     DB = await loadPortalDB();
 
-    // 🔥 FIX: Obtener equipos reales escaneando la DB por el nombre del coach
-    const myTeams = getMyTeams(currentSession.name, currentSession.teamIds);
-    const myTeamIds = myTeams.map(t => t.id);
-
-    // Actualizamos la sesión con los datos reales encontrados en la DB
-    currentSession.teamIds = myTeamIds;
-    
-    // Si el RPC no trajo el orgName, lo buscamos en la tabla de coaches
-    if (!currentSession.orgName) {
-      const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
-      if (dbCoach && dbCoach.orgName) {
-        currentSession.orgName = dbCoach.orgName;
+    const dbCoach = DB.coaches.find(c => c.id === currentSession.coachId);
+    if (dbCoach) {
+      if (!currentSession.teamIds || currentSession.teamIds.length === 0) {
+        currentSession.teamIds = dbCoach.teamIds || [];
+      }
+      if (!currentSession.orgName) {
+        currentSession.orgName = dbCoach.orgName || '';
       }
     }
 
@@ -71,7 +65,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       ? localStorage.getItem('zenith_active_team') 
       : sessionStorage.getItem('zenith_active_team');
     
-    // Ahora es imposible que falle
     const hasMultipleTeams = currentSession.teamIds.length > 1;
     const isValidSaved = savedTeamId && currentSession.teamIds.includes(savedTeamId);
 

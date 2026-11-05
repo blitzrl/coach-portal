@@ -1,4 +1,4 @@
-import { CoachAuth } from './auth.js?v=65';
+import { CoachAuth } from './auth.js?v=66';
 import { loadPortalDB, subscribeToChanges, getSupabase } from './services/supabase.js?v=65'; 
 import { renderDashboardView, bindDashboardEvents } from './views/dashboard.js?v=65';
 import { renderMarketView, bindMarketEvents } from './views/market.js?v=65';

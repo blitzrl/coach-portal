@@ -1,10 +1,10 @@
 // Lógica de autenticación del Portal de Coaches
-
-const _client = window.supabase.createClient(window.ZENITH_CONFIG.SUPABASE_URL, window.ZENITH_CONFIG.SUPABASE_ANON_KEY);
+import { getSupabase } from './services/supabase.js?v=65';
 
 export const CoachAuth = {
   async login(username, password) {
-    const { data, error } = await _client.rpc('coach_login', {
+    const sb = getSupabase();
+    const { data, error } = await sb.rpc('coach_login', {
       p_username: username,
       p_password: password
     });
@@ -20,7 +20,8 @@ export const CoachAuth = {
     const token = sessionStorage.getItem('zenith_coach_token');
     if (!token) return { ok: false, error: 'No hay sesión' };
 
-    const { data, error } = await _client.rpc('coach_validate_session', {
+    const sb = getSupabase();
+    const { data, error } = await sb.rpc('coach_validate_session', {
       p_token: token
     });
     
@@ -28,12 +29,7 @@ export const CoachAuth = {
       return { ok: false, error: error?.message || data?.error || 'Sesión expirada' };
     }
 
-    // 🔥 FIX: Recuperar el nombre del coach del sessionStorage por si el RPC no lo devuelve
-    const savedData = sessionStorage.getItem('zenith_coach_data');
-    const coachData = savedData ? JSON.parse(savedData) : {};
-    const coachName = data.name || coachData.name || 'Coach';
-
-    // 🔥 FIX: Asegurar que teamIds siempre sea un arreglo válido
+    // 🔥 FIX 1: Normalizar teamIds
     let teamIds = [];
     if (Array.isArray(data.teamIds)) {
       teamIds = data.teamIds;
@@ -44,14 +40,17 @@ export const CoachAuth = {
     }
 
     const orgName = data.orgName || '';
+    const coachName = data.name || JSON.parse(sessionStorage.getItem('zenith_coach_data') || '{}').name || 'Coach';
     
-    return { ...data, name: coachName, teamIds, orgName };
+    // 🔥 FIX 2: CRUCIAL - Devolver el token en el objeto para que app.js lo use en los fichajes
+    return { ...data, name: coachName, token, teamIds, orgName };
   },
 
   async logout() {
     const token = sessionStorage.getItem('zenith_coach_token');
     if (token) {
-      await _client.rpc('coach_logout', { p_token: token });
+      const sb = getSupabase();
+      await sb.rpc('coach_logout', { p_token: token });
     }
     
     const remember = localStorage.getItem('zenith_remember_team') === 'true';

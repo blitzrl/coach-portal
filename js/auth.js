@@ -1,5 +1,5 @@
 // Lógica de autenticación del Portal de Coaches
-import { getSupabase } from './services/supabase.js?v=65';
+import { getSupabase } from './services/supabase.js?v=67';
 
 export const CoachAuth = {
   async login(username, password) {
@@ -29,21 +29,29 @@ export const CoachAuth = {
       return { ok: false, error: error?.message || data?.error || 'Sesión expirada' };
     }
 
-    // 🔥 FIX 1: Normalizar teamIds
+    // 🔥 FIX: Parseo a prueba de balas de teamIds (soporta Array, JSON string, o string separado por comas)
     let teamIds = [];
     if (Array.isArray(data.teamIds)) {
       teamIds = data.teamIds;
     } else if (data.teamIds) {
-      try { teamIds = JSON.parse(data.teamIds); } catch(e) { teamIds = []; }
+      try { 
+        const parsed = JSON.parse(data.teamIds); 
+        if (Array.isArray(parsed)) teamIds = parsed;
+        else if (typeof parsed === 'string') teamIds = [parsed];
+      } catch(e) { 
+        if (typeof data.teamIds === 'string') {
+          teamIds = data.teamIds.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
     } else if (data.teamId) {
       teamIds = [data.teamId];
     }
 
     const orgName = data.orgName || '';
     const coachName = data.name || JSON.parse(sessionStorage.getItem('zenith_coach_data') || '{}').name || 'Coach';
+    const coachId = data.coachId || data.coach_id || data.id;
     
-    // 🔥 FIX 2: CRUCIAL - Devolver el token en el objeto para que app.js lo use en los fichajes
-    return { ...data, name: coachName, token, teamIds, orgName };
+    return { ...data, name: coachName, coachId, token, teamIds, orgName };
   },
 
   async logout() {
